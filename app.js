@@ -4,7 +4,7 @@ const tweets = [
 ];
 const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
-const NOTICE_VERSION = "2.1";
+const NOTICE_VERSION = "2.2";
 let avatarData = "";
 let avatarImage = null;
 let backgroundData = "";
@@ -79,10 +79,25 @@ async function loadWorkspace() {
   } catch { $("#saveState").lastChild.textContent = " 자동 저장 준비"; }
 }
 
-function applyTypography() {
+async function ensureFontLoaded(font = $("#font").value) {
+  if (!document.fonts) return;
+  try {
+    await Promise.all([
+      document.fonts.load(`400 16px "${font}"`, "한글 폰트 적용 확인"),
+      document.fonts.load(`700 16px "${font}"`, "한글 폰트 적용 확인")
+    ]);
+    await document.fonts.ready;
+  } catch (error) {
+    console.warn("웹폰트를 불러오지 못했습니다.", error);
+  }
+}
+
+async function applyTypography() {
   const font = $("#font").value;
   document.documentElement.style.setProperty("--active-font", `"${font}", sans-serif`);
   document.documentElement.style.setProperty("--tweet-font-size", $("#textSize").value + "px");
+  await ensureFontLoaded(font);
+  document.body.dataset.activeFont = font;
 }
 function resizeTweetArea(area) {
   area.style.height = "auto";
@@ -572,6 +587,7 @@ async function draw() {
   const imageScale = Number($("#imageScale").value) / 100;
   const pixelScale = 2 * imageScale;
   const font = $("#font").value;
+  await ensureFontLoaded(font);
   const showProfile = $("#profile").checked;
   const showDate = $("#date").checked;
   const showLink = $("#link").checked;
