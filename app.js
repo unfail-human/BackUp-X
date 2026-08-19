@@ -7,8 +7,6 @@ const view = $("#textView");
 const NOTICE_VERSION = "2.3";
 let avatarData = "";
 let avatarImage = null;
-let backgroundData = "";
-let backgroundImage = null;
 let saveTimer = null;
 
 function openWorkspaceDb() {
@@ -21,7 +19,7 @@ function openWorkspaceDb() {
 }
 function workspaceState() {
   return {
-    tweets, avatarData, backgroundData, url: $("#url").value, mainColor: $("#mainColor").value,
+    tweets, avatarData, url: $("#url").value, mainColor: $("#mainColor").value,
     bg: $("#bg").value, bg2: $("#bg2").value, bgMode: $("#bgMode").value, gradientAngle: $("#gradientAngle").value,
     card: $("#card").value, textSize: $("#textSize").value,
     font: $("#font").value,
@@ -61,8 +59,8 @@ async function loadWorkspace() {
     if (!saved) { $("#saveState").lastChild.textContent = " 자동 저장 준비"; return; }
     tweets.splice(0, tweets.length, ...(saved.tweets || tweets));
     avatarData = saved.avatarData || "";
-    backgroundData = saved.backgroundData || "";
     for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "gradientAngle", "card", "textSize", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
+    if (saved.bgMode === "image" || !$("#bgMode").value) $("#bgMode").value = "solid";
     if (saved.font === "KoPub Dotum") $("#font").value = "KoPub Dotum Medium";
     if (saved.font === "KoPub Batang") $("#font").value = "KoPub Batang Medium";
     if (saved.font === "Pretendard") $("#font").value = "Pretendard Variable";
@@ -74,7 +72,6 @@ async function loadWorkspace() {
     applyTypography();
     updateBackgroundControls();
     if (avatarData) { avatarImage = new Image(); avatarImage.src = avatarData; }
-    if (backgroundData) { backgroundImage = new Image(); backgroundImage.onload = draw; backgroundImage.src = backgroundData; }
     render();
     $("#saveState").className = "saved";
     $("#saveState").lastChild.textContent = " 자동 저장 복원됨";
@@ -395,8 +392,6 @@ $("#resetColors").onclick = () => {
   $("#gradientAngleValue").textContent = "135°";
   $("#card").value = "#e8dfd3";
   $("#bgMode").value = "solid";
-  backgroundData = "";
-  backgroundImage = null;
   $("#recommendColors").checked = true;
   updateBackgroundControls();
   draw();
@@ -405,8 +400,6 @@ $("#resetColors").onclick = () => {
 function updateBackgroundControls() {
   const mode = $("#bgMode").value;
   $("#gradientPanel").hidden = mode !== "gradient";
-  $("#backgroundImageField").hidden = mode !== "image";
-  $("#clearBackground").hidden = mode !== "image" || !backgroundData;
   updateGradientPreview();
 }
 function updateGradientPreview() {
@@ -422,24 +415,6 @@ $("#gradientAngle").oninput = () => {
   updateGradientPreview(); draw(); scheduleSave();
 };
 $("#bgMode").onchange = () => { updateBackgroundControls(); draw(); scheduleSave(); };
-$("#backgroundFile").onchange = (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    backgroundData = reader.result;
-    backgroundImage = new Image();
-    backgroundImage.onload = () => { updateBackgroundControls(); draw(); scheduleSave(); };
-    backgroundImage.src = backgroundData;
-  };
-  reader.readAsDataURL(file);
-};
-$("#clearBackground").onclick = () => {
-  backgroundData = "";
-  backgroundImage = null;
-  $("#backgroundFile").value = "";
-  updateBackgroundControls(); draw(); scheduleSave();
-};
 
 function exportHtml() {
   const profile = true;
@@ -496,13 +471,6 @@ function loadMediaImage(source) {
     image.src = source;
   });
 }
-function drawCover(ctx, image, width, height) {
-  const ratio = Math.max(width / image.naturalWidth, height / image.naturalHeight);
-  const drawWidth = image.naturalWidth * ratio;
-  const drawHeight = image.naturalHeight * ratio;
-  ctx.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
-}
-
 function mediaGridLayout(images, width) {
   const valid = images.filter(Boolean);
   if (!valid.length) return { height: 0, rows: [] };
@@ -581,8 +549,6 @@ async function draw() {
     gradient.addColorStop(1, $("#bg2").value);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, logicalHeight);
-  } else if ($("#bgMode").value === "image" && backgroundImage?.complete) {
-    drawCover(ctx, backgroundImage, width, logicalHeight);
   } else {
     ctx.fillStyle = $("#bg").value;
     ctx.fillRect(0, 0, width, logicalHeight);
