@@ -64,6 +64,7 @@ async function loadWorkspace() {
     if (saved.font === "KoPub Dotum") $("#font").value = "KoPub Dotum Medium";
     if (saved.font === "KoPub Batang") $("#font").value = "KoPub Batang Medium";
     if (saved.font === "Pretendard") $("#font").value = "Pretendard Variable";
+    if (!saved.font || saved.font === "Pretendard Variable") $("#font").value = "온글잎 박다현체";
     $("#gradientStart").value = $("#bg").value;
     $("#gradientAngleValue").textContent = $("#gradientAngle").value + "°";
     updateLoadButton();
@@ -92,6 +93,7 @@ async function ensureFontLoaded(font = $("#font").value) {
 }
 
 const FONT_STACKS = {
+  "온글잎 박다현체": '"온글잎 박다현체","Ownglyph PDH",sans-serif',
   "Pretendard Variable": '"Pretendard Variable",sans-serif',
   "Noto Sans KR": '"Noto Sans KR",sans-serif',
   "KoPub Dotum Light": '"KoPub Dotum Light",sans-serif',
