@@ -1,6 +1,6 @@
 @font-face{font-family:"온글잎 박다현체";src:url("./webfonts/온글잎 박다현체.ttf?v=38") format("truetype");font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:"Pretendard Variable";src:url("https://raw.githubusercontent.com/unfail-human/DearLog/main/PretendardVariable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
-@font-face{font-family:"Noto Sans KR";src:url("https://raw.githubusercontent.com/unfail-human/DearLog/main/NotoSansKR-VariableFont_wght.ttf") format("truetype");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Pretendard Variable";src:url("./webfonts/PretendardVariable.woff2?v=39") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Noto Sans KR";src:url("./webfonts/NotoSansKR-VariableFont_wght.woff2?v=39") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:"KoPub Dotum Medium";src:url("https://raw.githubusercontent.com/unfail-human/DearLog/main/KoPubWorld%20Dotum%20Medium.ttf") format("truetype");font-weight:500;font-style:normal;font-display:swap}
 @font-face{font-family:"KoPub Batang Medium";src:url("https://raw.githubusercontent.com/unfail-human/DearLog/main/KoPubWorld%20Batang%20Medium.ttf") format("truetype");font-weight:500;font-style:normal;font-display:swap}
 :root{--line:#e6e2db;--line-strong:#d7d2ca;--text:#2e2c29;--muted:#918d86;--panel:#fbfaf8;--work:#dedbd4;--white:#fff;--soft:#f3f0eb;--hover:#efede8;--theme:#9b8f7f;--theme-soft:#d8cec2;--theme-text:#2e2c29;--active-font:"온글잎 박다현체",sans-serif;--tweet-font-size:13px;--shadow:0 16px 52px rgba(40,35,30,.09)}
