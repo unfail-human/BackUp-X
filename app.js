@@ -83,7 +83,12 @@ async function loadWorkspace() {
     $("#textSizeValue").textContent = $("#textSize").value + "px";
     applyTypography();
     updateBackgroundControls();
-    if (avatarData) { avatarImage = new Image(); avatarImage.src = avatarData; }
+    if (avatarData) {
+      avatarImage = new Image();
+      if (!avatarData.startsWith("data:") && !avatarData.startsWith("blob:")) avatarImage.crossOrigin = "anonymous";
+      avatarImage.onerror = () => { avatarImage = null; draw(); };
+      avatarImage.src = avatarData;
+    }
     render();
     $("#saveState").className = "saved";
     $("#saveState").lastChild.textContent = " 자동 저장 복원됨";
@@ -340,7 +345,9 @@ async function importLinkedTweet(url, insertAfter = null) {
   if (importedAuthor?.avatar_url) {
     avatarData = await imageToLocalData(importedAuthor.avatar_url);
     avatarImage = new Image();
+    if (!avatarData.startsWith("data:") && !avatarData.startsWith("blob:")) avatarImage.crossOrigin = "anonymous";
     avatarImage.onload = draw;
+    avatarImage.onerror = () => { avatarImage = null; draw(); };
     avatarImage.src = avatarData;
   }
   render();
