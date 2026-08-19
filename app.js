@@ -482,7 +482,7 @@ function exportHtml() {
       ${media}
     </div>`;
   }).join("");
-  return `<div style="max-width:720px;margin:24px auto;padding:28px;background:linear-gradient(${angle}deg,${first},${second});font-family:'${safe(font)}','Noto Sans KR',sans-serif;color:#2e2c29;box-sizing:border-box"><div style="padding:8px 26px 24px;border:1px solid ${line};border-radius:20px;background:${card};box-shadow:0 10px 28px rgba(43,37,31,.12)">${posts}${original ? `<div style="margin-top:8px;padding:12px 15px;border-radius:999px;background:${soft};color:#746e66;font-size:${hintSize}px;overflow-wrap:anywhere"><a href="${original}" style="color:inherit;text-decoration:none">원문 트윗 보기 · ${original}</a></div>` : ""}</div></div>`;
+  return `<div style="max-width:720px;margin:24px auto;padding:28px;background:#fff;font-family:'${safe(font)}','Noto Sans KR',sans-serif;color:#2e2c29;box-sizing:border-box"><div style="padding:8px 26px 24px;border:1px solid ${line};border-radius:20px;background:${card};box-shadow:0 10px 28px rgba(43,37,31,.12)">${posts}${original ? `<div style="margin-top:8px;padding:12px 15px;border-radius:999px;background:${soft};color:#746e66;font-size:${hintSize}px;overflow-wrap:anywhere"><a href="${original}" style="color:inherit;text-decoration:none">원문 트윗 보기 · ${original}</a></div>` : ""}</div></div>`;
 }
 $("#rich").onclick = async () => {
   const button = $("#rich");
