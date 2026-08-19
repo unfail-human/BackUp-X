@@ -74,7 +74,7 @@ async function loadWorkspace() {
     $("#gradientAngleValue").textContent = $("#gradientAngle").value + "°";
     updateLoadButton();
     if (saved.recommendColors != null) $("#recommendColors").checked = saved.recommendColors;
-    applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
+    applySiteTheme($("#mainColor").value);
     $("#textSizeValue").textContent = $("#textSize").value + "px";
     applyTypography();
     updateBackgroundControls();
@@ -376,14 +376,19 @@ function recommendedPalette(main) {
     card: mixColors(main, "#ffffff", .78)
   };
 }
-function applySiteTheme(main, background, card) {
+function sitePalette(main) {
+  if (main.toLowerCase() === "#9b8f7f") return { background: "#f6f2eb", panel: "#eee8df" };
+  return { background: mixColors(main, "#ffffff", .9), panel: mixColors(main, "#ffffff", .82) };
+}
+function applySiteTheme(main) {
+  const site = sitePalette(main);
   const root = document.documentElement;
   root.style.setProperty("--theme", main);
   root.style.setProperty("--theme-soft", mixColors(main, "#ffffff", .72));
   root.style.setProperty("--theme-text", luminance(main) < .38 ? "#ffffff" : "#2e2c29");
-  root.style.setProperty("--work", background);
-  root.style.setProperty("--panel", card);
-  document.body.style.background = background;
+  root.style.setProperty("--work", site.background);
+  root.style.setProperty("--panel", site.panel);
+  document.body.style.background = site.background;
 }
 function applyRecommendedColors() {
   const main = $("#mainColor").value;
@@ -392,7 +397,7 @@ function applyRecommendedColors() {
   $("#gradientStart").value = palette.background;
   $("#bg2").value = main.toLowerCase() === "#9b8f7f" ? "#ded4c7" : mixColors(main, "#ffffff", .68);
   $("#card").value = palette.card;
-  applySiteTheme(main, palette.background, palette.card);
+  applySiteTheme(main);
   updateGradientPreview();
   draw();
   scheduleSave();
@@ -412,7 +417,7 @@ $("#resetColors").onclick = () => {
   $("#bgMode").value = "solid";
   $("#recommendColors").checked = true;
   updateBackgroundControls();
-  applySiteTheme("#9b8f7f", "#f6f2eb", "#eee8df");
+  applySiteTheme("#9b8f7f");
   draw();
   scheduleSave();
 };
@@ -427,7 +432,6 @@ function updateGradientPreview() {
 $("#gradientStart").oninput = () => {
   $("#bg").value = $("#gradientStart").value;
   $("#recommendColors").checked = false;
-  applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
   updateGradientPreview(); draw(); scheduleSave();
 };
 $("#gradientAngle").oninput = () => {
@@ -675,7 +679,7 @@ $("#png").onclick = async () => {
     if ((id === "bg" || id === "bg2" || id === "card") && $("#recommendColors").checked) $("#recommendColors").checked = false;
     if (id === "bg") $("#gradientStart").value = $("#bg").value;
     if (id === "bg" || id === "bg2") updateGradientPreview();
-    if (id === "mainColor" || id === "bg" || id === "card") applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
+    if (id === "mainColor") applySiteTheme($("#mainColor").value);
     if (id === "font" || id === "textSize") {
       applyTypography();
       view.querySelectorAll("textarea").forEach(resizeTweetArea);
