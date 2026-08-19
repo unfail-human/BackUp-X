@@ -65,7 +65,11 @@ async function loadWorkspace() {
       $("#bg2").value = "#ded4c7";
       $("#card").value = "#eee8df";
     }
-    if (saved.bgMode === "image" || !$("#bgMode").value) $("#bgMode").value = "solid";
+    if (saved.bgMode === "image" || !$("#bgMode").value) $("#bgMode").value = "gradient";
+    if (localStorage.getItem("backupXGradientDefault") !== "1") {
+      $("#bgMode").value = "gradient";
+      localStorage.setItem("backupXGradientDefault", "1");
+    }
     if (saved.font === "KoPub Dotum") $("#font").value = "KoPub Dotum Medium";
     if (saved.font === "KoPub Batang") $("#font").value = "KoPub Batang Medium";
     if (saved.font === "Pretendard") $("#font").value = "Pretendard Variable";
@@ -88,10 +92,7 @@ async function loadWorkspace() {
 async function ensureFontLoaded(font = $("#font").value) {
   if (!document.fonts) return;
   try {
-    await Promise.all([
-      document.fonts.load(`400 16px "${font}"`, "한글 폰트 적용 확인"),
-      document.fonts.load(`700 16px "${font}"`, "한글 폰트 적용 확인")
-    ]);
+    await document.fonts.load(`400 16px "${font}"`, "한글 폰트 적용 확인");
     await document.fonts.ready;
   } catch (error) {
     console.warn("웹폰트를 불러오지 못했습니다.", error);
@@ -377,17 +378,27 @@ function recommendedPalette(main) {
   };
 }
 function sitePalette(main) {
-  if (main.toLowerCase() === "#9b8f7f") return { background: "#dedbd4", panel: "#fbfaf8" };
-  return { background: mixColors(main, "#ffffff", .9), panel: mixColors(main, "#ffffff", .82) };
+  if (main.toLowerCase() === "#9b8f7f") return { background: "#eeeae3", panel: "#fbfaf8", soft: "#f3eee7", line: "#ded7cd", hover: "#f0ebe4" };
+  return {
+    background: mixColors(main, "#ffffff", .91),
+    panel: mixColors(main, "#ffffff", .975),
+    soft: mixColors(main, "#ffffff", .86),
+    line: mixColors(main, "#ffffff", .73),
+    hover: mixColors(main, "#ffffff", .9)
+  };
 }
 function applySiteTheme(main) {
   const site = sitePalette(main);
   const root = document.documentElement;
   root.style.setProperty("--theme", main);
-  root.style.setProperty("--theme-soft", mixColors(main, "#ffffff", .72));
+  root.style.setProperty("--theme-soft", site.soft);
   root.style.setProperty("--theme-text", luminance(main) < .38 ? "#ffffff" : "#2e2c29");
   root.style.setProperty("--work", site.background);
   root.style.setProperty("--panel", site.panel);
+  root.style.setProperty("--soft", site.soft);
+  root.style.setProperty("--hover", site.hover);
+  root.style.setProperty("--line", site.line);
+  root.style.setProperty("--line-strong", mixColors(main, "#ffffff", .61));
   document.body.style.background = site.background;
 }
 function applyRecommendedColors() {
@@ -414,7 +425,7 @@ $("#resetColors").onclick = () => {
   $("#gradientAngle").value = "135";
   $("#gradientAngleValue").textContent = "135°";
   $("#card").value = "#eee8df";
-  $("#bgMode").value = "solid";
+  $("#bgMode").value = "gradient";
   $("#recommendColors").checked = true;
   updateBackgroundControls();
   applySiteTheme("#9b8f7f");
@@ -441,22 +452,41 @@ $("#gradientAngle").oninput = () => {
 $("#bgMode").onchange = () => { updateBackgroundControls(); draw(); scheduleSave(); };
 
 function exportHtml() {
-  const profile = true;
-  const date = true;
   const font = $("#font").value;
   const textSize = $("#textSize").value;
-  return `<section style="max-width:680px;margin:auto;font-family:'${font}',sans-serif;font-size:${textSize}px;color:#2e2c29">${tweets.map((tweet) => `
-    <article style="padding:24px 0;border-bottom:1px solid #ddd">
-      ${profile ? `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">${avatarData ? `<img src="${avatarData}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">` : ""}<div><b>${tweet.name}</b> <span style="color:#777">${tweet.handle}${date ? " · " + tweet.date : ""}</span></div></div>` : ""}
-      <div style="white-space:pre-wrap;line-height:1.8">${tweet.text}</div>
-      ${tweet.media?.map((src) => `<img src="${src}" style="display:block;width:100%;height:auto;margin-top:10px;border-radius:8px" alt="트윗 첨부 이미지">`).join("") || ""}
-    </article>`).join("")}
-  </section>`;
+  const safe = (value) => String(value ?? "").replace(/[&<>\"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[char]));
+  const main = $("#mainColor").value;
+  const line = mixColors(main, "#ffffff", .76);
+  const soft = mixColors(main, "#ffffff", .91);
+  const original = safe(($("#url").value || "").split("?")[0]);
+  return `<div style="max-width:720px;margin:24px auto;padding:10px 22px 22px;border:1px solid ${line};border-radius:18px;background:#fff;font-family:'${safe(font)}','Noto Sans KR',sans-serif;font-size:${textSize}px;color:#2e2c29;box-sizing:border-box">${tweets.map((tweet, index) => `
+    <div style="padding:24px 0;${index < tweets.length - 1 ? `border-bottom:1px solid ${line}` : ""}">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">${avatarData ? `<img src="${avatarData}" width="44" height="44" style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover">` : `<span style="display:inline-block;width:44px;height:44px;border-radius:50%;background:${main}"></span>`}<div style="line-height:1.35"><strong style="display:block;font-size:1em">${safe(tweet.name)}</strong><span style="display:block;margin-top:3px;color:#918d86;font-size:.82em">${safe(tweet.handle)} &nbsp;·&nbsp; ${safe(tweet.date)}</span></div></div>
+      <div style="white-space:pre-wrap;word-break:break-word;line-height:1.75">${safe(tweet.text)}</div>
+      ${tweet.media?.map((src) => `<div style="margin-top:18px;padding:5px;border-radius:12px;background:${soft}"><img src="${safe(src)}" style="display:block;width:100%;height:auto;margin:0;border-radius:9px" alt="트윗 첨부 이미지"></div>`).join("") || ""}
+    </div>`).join("")}${original ? `<div style="margin-top:4px;padding:12px 15px;border-radius:999px;background:${soft};color:#746e66;font-size:.82em;overflow-wrap:anywhere"><a href="${original}" style="color:inherit;text-decoration:none">원문 트윗 보기 · ${original}</a></div>` : ""}</div>`;
 }
-$("#rich").onclick = () => navigator.clipboard.write([new ClipboardItem({
-  "text/html": new Blob([exportHtml()], { type: "text/html" }),
-  "text/plain": new Blob([tweets.map((tweet) => tweet.text).join("\n\n")], { type: "text/plain" })
-})]);
+$("#rich").onclick = async () => {
+  const button = $("#rich");
+  button.disabled = true;
+  button.textContent = "복사 중…";
+  button.classList.remove("copied", "copy-error");
+  try {
+    const html = exportHtml();
+    const plain = tweets.map((tweet) => `${tweet.name} ${tweet.handle} · ${tweet.date}\n${tweet.text}`).join("\n\n") + ($("#url").value ? `\n\n원문: ${$("#url").value.split("?")[0]}` : "");
+    if (navigator.clipboard?.write && window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([plain],{type:"text/plain"})})]);
+    else {
+      const holder = document.createElement("div"); holder.contentEditable = "true"; holder.innerHTML = html; holder.style.position = "fixed"; holder.style.left = "-9999px"; document.body.append(holder);
+      const range = document.createRange(); range.selectNodeContents(holder); const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range);
+      if (!document.execCommand("copy")) throw new Error("copy failed"); holder.remove(); selection.removeAllRanges();
+    }
+    button.classList.add("copied"); button.textContent = "✓ 복사 완료";
+  } catch (error) {
+    console.warn("서식 복사 실패", error); button.classList.add("copy-error"); button.textContent = "복사 실패 · 다시 시도";
+  } finally {
+    setTimeout(() => { button.disabled = false; button.classList.remove("copied", "copy-error"); button.textContent = "서식 복사"; }, 1800);
+  }
+};
 
 function wrapText(ctx, text, maxWidth) {
   const lines = [];
@@ -516,7 +546,7 @@ function mediaGridLayout(images, width) {
 
 function drawContainedImage(ctx, image, x, y, width, height, radius = 10) {
   ctx.save();
-  ctx.fillStyle = mixColors($("#card").value, "#ffffff", .42);
+  ctx.fillStyle = mixColors($("#mainColor").value, "#ffffff", .82);
   ctx.beginPath(); ctx.roundRect(x, y, width, height, radius); ctx.fill(); ctx.clip();
   const ratio = Math.min(width / image.naturalWidth, height / image.naturalHeight);
   const drawWidth = image.naturalWidth * ratio, drawHeight = image.naturalHeight * ratio;

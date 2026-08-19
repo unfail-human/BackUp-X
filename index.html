@@ -16,7 +16,7 @@
 <meta name="twitter:image" content="https://unfail-human.github.io/BackUp-X/og-image.png">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="apple-touch-icon" href="./favicon.png">
-<link rel="stylesheet" href="style.css?v=36">
+<link rel="stylesheet" href="style.css?v=38">
 </head>
 <body>
 <header>
@@ -73,7 +73,7 @@
 </label>
 </div>
 <button id="resetColors" class="reset-colors" type="button">색상 초기화</button>
-<label>이미지 배경 편집<select id="bgMode"><option value="solid">단색</option><option value="gradient">그라데이션</option></select>
+<label>이미지 배경 편집<select id="bgMode"><option value="gradient" selected>그라데이션</option><option value="solid">단색</option></select>
 </label>
 <section id="gradientPanel" class="gradient-panel" hidden>
 <div class="gradient-preview" id="gradientPreview"></div>
@@ -88,7 +88,7 @@
 <nav>
 <button data-tab="text" class="on">게시글 편집</button>
 <button data-tab="image">이미지 미리보기</button>
-<button id="rich" class="copy-rich">서식 복사</button>
+<button id="rich" class="copy-rich" type="button" aria-live="polite">서식 복사</button>
 </nav>
 <div id="textView">
 </div>
@@ -114,7 +114,6 @@ BackUp-X의 기능과 화면이 새롭게 업데이트되었습니다.
 <button id="noticeClose" type="button">확인</button>
 </section>
 </div>
-<script src="app.js?v=36">
-</script>
+<script src="app.js?v=38"></script>
 </body>
 </html>
