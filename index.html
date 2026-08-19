@@ -16,7 +16,7 @@
 <meta name="twitter:image" content="https://unfail-human.github.io/BackUp-X/og-image.png">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="apple-touch-icon" href="./favicon.png">
-<link rel="stylesheet" href="style.css?v=27">
+<link rel="stylesheet" href="style.css?v=31">
 </head>
 <body>
 <header>
@@ -58,7 +58,7 @@
 <option value="Georgia">Georgia</option>
 </select>
 </label>
-<label>게시글 글자 크기 <span id="textSizeValue">15px</span><input id="textSize" type="range" min="12" max="22" value="15">
+<label>게시글 글자 크기 <span id="textSizeValue">13px</span><input id="textSize" type="range" min="8" max="18" value="13">
 </label>
 <div class="theme-row">
 <label>메인 테마색<input id="mainColor" type="color" value="#9b8f7f">
@@ -72,7 +72,7 @@
 </label>
 </div>
 <button id="resetColors" class="reset-colors" type="button">색상 초기화</button>
-<label>이미지 배경 편집<select id="bgMode"><option value="solid">단색</option><option value="gradient">그라데이션</option><option value="image">이미지</option></select>
+<label>이미지 배경 편집<select id="bgMode"><option value="solid">단색</option><option value="gradient">그라데이션</option></select>
 </label>
 <section id="gradientPanel" class="gradient-panel" hidden>
 <div class="gradient-preview" id="gradientPreview"></div>
@@ -82,9 +82,6 @@
 </div>
 <label class="gradient-angle"><span>그라데이션 방향 <b id="gradientAngleValue">135°</b></span><input id="gradientAngle" type="range" min="0" max="360" value="135"></label>
 </section>
-<label id="backgroundImageField" hidden>배경 이미지<input id="backgroundFile" type="file" accept="image/*">
-</label>
-<button id="clearBackground" class="reset-colors" type="button" hidden>배경 이미지 삭제</button>
 </aside>
 <section class="editor">
 <nav>
@@ -116,7 +113,7 @@ BackUp-X의 기능과 화면이 새롭게 업데이트되었습니다.
 <button id="noticeClose" type="button">확인</button>
 </section>
 </div>
-<script src="app.js?v=28">
+<script src="app.js?v=31">
 </script>
 </body>
 </html>
