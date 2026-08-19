@@ -43,6 +43,7 @@ input[type=checkbox]{width:15px;height:15px;accent-color:#7e786f;vertical-align:
 nav button{border:1px solid var(--line);border-radius:7px;background:#fff;padding:8px 13px;font-size:9px;font-weight:700;color:#757169}
 nav button:hover{background:var(--hover)}
 nav button.on{background:var(--theme-soft);border-color:color-mix(in srgb,var(--theme) 35%,#ddd);color:var(--theme-text)}
+.editor nav .copy-rich{margin-left:auto;background:var(--theme-soft);border-color:color-mix(in srgb,var(--theme) 35%,#ddd);color:var(--theme-text)}
 #textView{flex:1;padding:14px 24px 24px}
 .tweet{display:grid;grid-template-columns:42px minmax(0,1fr);gap:12px;padding:18px 6px;border-bottom:1px solid var(--line)}
 .tweet:last-child{border-bottom:0}
@@ -55,7 +56,7 @@ nav button.on{background:var(--theme-soft);border-color:color-mix(in srgb,var(--
 .tweet textarea:focus{padding-left:9px;background:#fff}
 #imageView{flex:1;padding:28px;background:#e3dfd8;overflow:auto}
 canvas{display:block;width:min(100%,720px);height:auto;margin:auto;border:1px solid rgba(205,199,190,.9);border-radius:7px;box-shadow:0 14px 38px rgba(45,40,35,.14)}
-.editor footer{display:flex;justify-content:flex-end;gap:6px;padding:14px 18px;background:color-mix(in srgb,var(--panel) 96%,transparent);border-top:1px solid var(--line)}
+.editor footer{display:flex;justify-content:flex-end;gap:6px;padding:14px 18px;background:color-mix(in srgb,var(--panel) 96%,transparent);border-top:1px solid var(--line)}.editor footer[hidden]{display:none}
 .editor footer button{min-width:88px;border:1px solid var(--line-strong);border-radius:7px;background:#fff;color:#625e58;padding:8px 12px;font-size:9px;font-weight:700}
 .editor footer button:hover{background:var(--hover)}
 .editor footer button:last-child{background:var(--theme-soft);border-color:color-mix(in srgb,var(--theme) 35%,#ddd);color:var(--theme-text)}
