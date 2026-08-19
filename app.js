@@ -4,7 +4,7 @@ const tweets = [
 ];
 const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
-const NOTICE_VERSION = "1.8";
+const NOTICE_VERSION = "1.9";
 let avatarData = "";
 let avatarImage = null;
 let backgroundData = "";
@@ -64,6 +64,7 @@ async function loadWorkspace() {
     avatarData = saved.avatarData || "";
     backgroundData = saved.backgroundData || "";
     for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "card", "imageScale", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
+    updateLoadButton();
     for (const id of ["profile", "date", "link", "recommendColors"]) if (saved[id] != null) $("#" + id).checked = saved[id];
     applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
     $("#imageScaleValue").textContent = $("#imageScale").value + "%";
@@ -81,10 +82,11 @@ function render() {
     <article class="tweet">
       <div class="avatar">${avatarData ? `<img src="${avatarData}" alt="프로필 사진">` : "BU"}</div>
       <div>
-        <div class="tweet-head"><div class="meta"><b>${tweet.name}</b>${tweet.handle} · ${tweet.date}</div><button type="button" class="insert-toggle" data-open-insert="${index}" aria-label="이 게시글 다음에 트윗 추가">+</button></div>
+        <div class="tweet-head"><div class="meta"><b>${tweet.name}</b>${tweet.handle} · ${tweet.date}</div></div>
         <textarea data-i="${index}">${tweet.text}</textarea>
         ${tweet.media?.length ? `<div class="tweet-media">${tweet.media.map((src) => `<img src="${src}" alt="트윗 첨부 이미지" loading="lazy">`).join("")}</div>` : ""}
         <div class="tweet-media-tools"><label>원본 사진 ${tweet.media?.length ? "교체" : "추가"}<input type="file" accept="image/*" multiple data-media-i="${index}"></label>${tweet.media?.length ? `<button type="button" data-clear-media="${index}">사진 모두 지우기</button>` : ""}</div>
+        <div class="insert-row"><button type="button" class="insert-toggle" data-open-insert="${index}" aria-label="이 게시글 다음에 트윗 추가">+</button></div>
         <div class="thread-insert" data-insert-box="${index}" hidden><input data-insert-url="${index}" placeholder="이 다음에 넣을 누락 트윗 링크"><button type="button" data-insert-go="${index}">추가</button></div>
       </div>
     </article>`).join("");
@@ -275,6 +277,12 @@ function setImportStatus(type, label, percent = "") {
   status.querySelector("span").textContent = label;
   status.querySelector("b").textContent = percent === "" ? "" : percent + "%";
 }
+function isTweetUrl(value) {
+  return /^https?:\/\/(x\.com|twitter\.com)\/[^/]+\/status\/\d+/i.test(value.trim());
+}
+function updateLoadButton() {
+  $("#load").disabled = !isTweetUrl($("#url").value);
+}
 
 function loadOEmbed(url) {
   return new Promise((resolve, reject) => {
@@ -292,6 +300,10 @@ function parseOEmbed(data) {
   const doc = new DOMParser().parseFromString(data.html, "text/html");
   const paragraph = doc.querySelector("blockquote p");
   if (!paragraph) throw new Error("post unavailable");
+  const canonicalUrl = data.url.split("?")[0];
+  const linkedPosts = [...paragraph.querySelectorAll('a[href*="/status/"]')]
+    .map((anchor) => anchor.href.split("?")[0])
+    .filter((url, index, all) => url !== canonicalUrl && all.indexOf(url) === index);
   paragraph.querySelectorAll("a").forEach((anchor) => {
     if (/pic\.twitter\.com|t\.co/i.test(anchor.textContent)) anchor.remove();
   });
@@ -302,21 +314,40 @@ function parseOEmbed(data) {
     username: authorUrl.pathname.split("/").filter(Boolean)[0],
     date: dateLink?.textContent?.trim() || "",
     text: paragraph.textContent.trim(),
-    media: []
+    media: [],
+    linkedPosts
   };
 }
 async function importLinkedTweet(url, insertAfter = null) {
-  if (!/^https?:\/\/(x\.com|twitter\.com)\/[^/]+\/status\/\d+/i.test(url)) throw new Error("invalid url");
+  if (!isTweetUrl(url)) throw new Error("invalid url");
   const inserting = Number.isInteger(insertAfter);
   setImportStatus("", inserting ? "누락 트윗 불러오는 중" : "첫 트윗 불러오는 중", 25);
   const tweet = parseOEmbed(await loadOEmbed(url));
   const handle = "@" + tweet.username;
   if (inserting && tweets.length && tweets[0].handle.toLowerCase() !== handle.toLowerCase()) throw new Error("different author");
   const item = { name: tweet.name, handle, date: tweet.date, text: tweet.text, media: [] };
-  if (inserting) tweets.splice(insertAfter + 1, 0, item); else tweets.splice(0, tweets.length, item);
+  if (inserting) tweets.splice(insertAfter + 1, 0, item);
+  else {
+    const imported = [item];
+    const seen = new Set([url.split("?")[0]]);
+    const queue = [...tweet.linkedPosts];
+    while (queue.length && imported.length < 20) {
+      const linkedUrl = queue.shift();
+      if (seen.has(linkedUrl)) continue;
+      seen.add(linkedUrl);
+      try {
+        setImportStatus("", `연결된 타래 확인 중 · ${imported.length + 1}개`, Math.min(90, 35 + imported.length * 8));
+        const linked = parseOEmbed(await loadOEmbed(linkedUrl));
+        if (("@" + linked.username).toLowerCase() !== handle.toLowerCase()) continue;
+        imported.push({ name: linked.name, handle: "@" + linked.username, date: linked.date, text: linked.text, media: [] });
+        queue.push(...linked.linkedPosts);
+      } catch {}
+    }
+    tweets.splice(0, tweets.length, ...imported);
+  }
   render();
   draw();
-  setImportStatus("done", inserting ? `누락 트윗 추가 완료 · 총 ${tweets.length}개` : "첫 트윗 불러오기 완료", 100);
+  setImportStatus("done", inserting ? `누락 트윗 추가 완료 · 총 ${tweets.length}개` : `타래 불러오기 완료 · ${tweets.length}개`, 100);
   scheduleSave();
 }
 $("#load").onclick = async () => {
@@ -602,5 +633,5 @@ $("#png").onclick = async () => {
     scheduleSave();
   };
 });
-$("#url").addEventListener("input", scheduleSave);
+$("#url").addEventListener("input", () => { updateLoadButton(); scheduleSave(); });
 loadWorkspace();
