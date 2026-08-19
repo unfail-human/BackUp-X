@@ -736,7 +736,6 @@ document.querySelectorAll("nav button[data-tab]").forEach((button) => button.onc
   document.querySelectorAll("nav button[data-tab]").forEach((item) => item.classList.remove("on"));
   button.classList.add("on");
   const imageMode = button.dataset.tab === "image";
-  $(".app").classList.toggle("image-preview-mode", imageMode);
   if (imageMode) renderImagePreview();
   view.hidden = imageMode;
   $("#imageView").hidden = !imageMode;
