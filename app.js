@@ -23,23 +23,156 @@ function render() {
 }
 render();
 
-$("#avatarFile").onchange = (event) => {
-  const file = event.target.files[0];
+const photoEditor = { image: null, zoom: 1, offsetX: 0, offsetY: 0, dragging: false, startX: 0, startY: 0, baseX: 0, baseY: 0 };
+
+function editorMetrics() {
+  const canvas = $("#photoEditorCanvas");
+  const image = photoEditor.image;
+  const base = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+  const scale = base * photoEditor.zoom;
+  return { canvas, scale, width: image.naturalWidth * scale, height: image.naturalHeight * scale };
+}
+
+function clampPhotoOffset() {
+  if (!photoEditor.image) return;
+  const { canvas, width, height } = editorMetrics();
+  const maxX = Math.max(0, (width - canvas.width) / 2);
+  const maxY = Math.max(0, (height - canvas.height) / 2);
+  photoEditor.offsetX = Math.max(-maxX, Math.min(maxX, photoEditor.offsetX));
+  photoEditor.offsetY = Math.max(-maxY, Math.min(maxY, photoEditor.offsetY));
+}
+
+function drawPhotoEditor() {
+  if (!photoEditor.image) return;
+  clampPhotoOffset();
+  const { canvas, width, height } = editorMetrics();
+  const ctx = canvas.getContext("2d");
+  const x = (canvas.width - width) / 2 + photoEditor.offsetX;
+  const y = (canvas.height - height) / 2 + photoEditor.offsetY;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#dedbd4";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(photoEditor.image, x, y, width, height);
+  const preview = $("#photoEditorPreview");
+  const pctx = preview.getContext("2d");
+  pctx.clearRect(0, 0, preview.width, preview.height);
+  pctx.save();
+  pctx.beginPath();
+  pctx.arc(56, 56, 56, 0, Math.PI * 2);
+  pctx.clip();
+  pctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, 112, 112);
+  pctx.restore();
+  $("#photoEditorZoomValue").textContent = Math.round(photoEditor.zoom * 100) + "%";
+}
+
+function openPhotoEditor(file) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    avatarData = reader.result;
-    avatarImage = new Image();
-    avatarImage.onload = () => { render(); draw(); };
-    avatarImage.src = avatarData;
+    const image = new Image();
+    image.onload = () => {
+      photoEditor.image = image;
+      photoEditor.zoom = 1;
+      photoEditor.offsetX = 0;
+      photoEditor.offsetY = 0;
+      $("#photoEditorZoom").value = "1";
+      $("#photoEditorBackdrop").hidden = false;
+      drawPhotoEditor();
+    };
+    image.src = reader.result;
   };
   reader.readAsDataURL(file);
+}
+
+function closePhotoEditor() {
+  $("#photoEditorBackdrop").hidden = true;
+  $("#avatarFile").value = "";
+}
+
+$("#avatarFile").onchange = (event) => openPhotoEditor(event.target.files[0]);
+$("#photoEditorZoom").oninput = (event) => { photoEditor.zoom = Number(event.target.value); drawPhotoEditor(); };
+$("#photoEditorReset").onclick = () => { photoEditor.zoom = 1; photoEditor.offsetX = 0; photoEditor.offsetY = 0; $("#photoEditorZoom").value = "1"; drawPhotoEditor(); };
+$("#photoEditorCancel").onclick = closePhotoEditor;
+$("#photoEditorClose").onclick = closePhotoEditor;
+$("#photoEditorBackdrop").onclick = (event) => { if (event.target === $("#photoEditorBackdrop")) closePhotoEditor(); };
+$("#photoEditorApply").onclick = () => {
+  const source = $("#photoEditorCanvas");
+  const output = document.createElement("canvas");
+  output.width = 1024;
+  output.height = 1024;
+  output.getContext("2d").drawImage(source, 0, 0, 1024, 1024);
+  avatarData = output.toDataURL("image/png", 1);
+  avatarImage = new Image();
+  avatarImage.onload = () => { render(); draw(); };
+  avatarImage.src = avatarData;
+  closePhotoEditor();
 };
+
+const photoCanvasWrap = document.querySelector(".photo-editor-canvas-wrap");
+photoCanvasWrap.onpointerdown = (event) => {
+  if (!photoEditor.image || event.button !== 0) return;
+  photoEditor.dragging = true;
+  photoEditor.startX = event.clientX;
+  photoEditor.startY = event.clientY;
+  photoEditor.baseX = photoEditor.offsetX;
+  photoEditor.baseY = photoEditor.offsetY;
+  photoCanvasWrap.classList.add("is-dragging");
+  photoCanvasWrap.setPointerCapture(event.pointerId);
+};
+photoCanvasWrap.onpointermove = (event) => {
+  if (!photoEditor.dragging) return;
+  const rect = photoCanvasWrap.getBoundingClientRect();
+  photoEditor.offsetX = photoEditor.baseX + (event.clientX - photoEditor.startX) * 420 / rect.width;
+  photoEditor.offsetY = photoEditor.baseY + (event.clientY - photoEditor.startY) * 420 / rect.height;
+  drawPhotoEditor();
+};
+function endPhotoDrag(event) {
+  if (!photoEditor.dragging) return;
+  photoEditor.dragging = false;
+  photoCanvasWrap.classList.remove("is-dragging");
+  try { photoCanvasWrap.releasePointerCapture(event.pointerId); } catch {}
+}
+photoCanvasWrap.onpointerup = endPhotoDrag;
+photoCanvasWrap.onpointercancel = endPhotoDrag;
 
 $("#load").onclick = () => {
   $("#status").textContent = /^https?:\/\/(x\.com|twitter\.com)\//i.test($("#url").value)
     ? "X API 연결 후 내 계정을 확인해 타래를 가져옵니다."
     : "올바른 내 X 트윗 링크를 입력해 주세요.";
+};
+
+function hexToRgb(hex) {
+  const value = hex.replace("#", "");
+  return { r: parseInt(value.slice(0, 2), 16), g: parseInt(value.slice(2, 4), 16), b: parseInt(value.slice(4, 6), 16) };
+}
+function rgbToHex(r, g, b) {
+  const format = (value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0");
+  return "#" + format(r) + format(g) + format(b);
+}
+function mixColors(first, second, amount) {
+  const a = hexToRgb(first), b = hexToRgb(second);
+  return rgbToHex(a.r + (b.r - a.r) * amount, a.g + (b.g - a.g) * amount, a.b + (b.b - a.b) * amount);
+}
+function luminance(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  const values = [r, g, b].map((value) => { value /= 255; return value <= .03928 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4; });
+  return .2126 * values[0] + .7152 * values[1] + .0722 * values[2];
+}
+function recommendedPalette(main) {
+  if (main.toLowerCase() === "#9b8f7f") return { background: "#dedbd4", card: "#fbfaf8" };
+  const lightness = luminance(main);
+  return {
+    background: mixColors(main, "#ffffff", lightness < .3 ? .86 : .78),
+    card: mixColors(main, "#ffffff", .95)
+  };
+}
+$("#recommendColors").onclick = () => {
+  const palette = recommendedPalette($("#mainColor").value);
+  $("#bg").value = palette.background;
+  $("#card").value = palette.card;
+  draw();
 };
 
 function exportHtml() {
@@ -48,7 +181,7 @@ function exportHtml() {
   const link = $("#link").checked;
   const url = $("#url").value || "https://x.com/";
   const font = $("#font").value;
-  return `<section style="max-width:680px;margin:auto;font-family:'${font}',sans-serif;color:#3f382e">${tweets.map((tweet) => `
+  return `<section style="max-width:680px;margin:auto;font-family:'${font}',sans-serif;color:#2e2c29">${tweets.map((tweet) => `
     <article style="padding:24px 0;border-bottom:1px solid #ddd">
       ${profile ? `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">${avatarData ? `<img src="${avatarData}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">` : ""}<div><b>${tweet.name}</b> <span style="color:#777">${tweet.handle}${date ? " · " + tweet.date : ""}</span></div></div>` : ""}
       <div style="white-space:pre-wrap;line-height:1.8">${tweet.text}</div>
@@ -120,26 +253,26 @@ function draw() {
     if (showProfile) {
       if (avatarImage && avatarImage.complete) circleImage(ctx, avatarImage, padding, y, 44);
       else {
-        ctx.fillStyle = "#c8b99f";
+        ctx.fillStyle = $("#mainColor").value;
         ctx.beginPath();
         ctx.arc(padding + 22, y + 22, 22, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "#3f382e";
+        ctx.fillStyle = luminance($("#mainColor").value) < .45 ? "#ffffff" : "#2e2c29";
         ctx.font = `700 12px "${font}"`;
         ctx.textAlign = "center";
         ctx.fillText("BU", padding + 22, y + 27);
         ctx.textAlign = "left";
       }
-      ctx.fillStyle = "#3f382e";
+      ctx.fillStyle = "#2e2c29";
       ctx.font = `700 14px "${font}"`;
       ctx.fillText(tweet.name, padding + 58, y + 17);
-      ctx.fillStyle = "#776e61";
+      ctx.fillStyle = "#918d86";
       ctx.font = `12px "${font}"`;
       const meta = tweet.handle + (showDate ? "  ·  " + tweet.date : "");
       ctx.fillText(meta, padding + 58, y + 37);
       y += 58;
     }
-    ctx.fillStyle = "#3f382e";
+    ctx.fillStyle = "#2e2c29";
     ctx.font = `${fontSize}px "${font}"`;
     wrapped[index].forEach((line) => {
       y += fontSize * 1.7;
@@ -147,7 +280,7 @@ function draw() {
     });
     y += 28;
     if (index < tweets.length - 1) {
-      ctx.strokeStyle = "#ded8cc";
+      ctx.strokeStyle = "#e6e2db";
       ctx.beginPath();
       ctx.moveTo(padding, y);
       ctx.lineTo(width - padding, y);
@@ -156,7 +289,7 @@ function draw() {
     }
   });
   if (showLink) {
-    ctx.fillStyle = "#776e61";
+    ctx.fillStyle = "#918d86";
     ctx.font = `11px "${font}"`;
     ctx.fillText("원문  " + url, padding, y + 12);
   }
@@ -180,7 +313,7 @@ $("#png").onclick = () => {
   anchor.href = $("#canvas").toDataURL();
   anchor.click();
 };
-["bg", "card", "size", "profile", "date", "link", "font"].forEach((id) => {
+["mainColor", "bg", "card", "size", "profile", "date", "link", "font"].forEach((id) => {
   $("#" + id).oninput = () => {
     if (id === "font") view.style.fontFamily = $("#" + id).value;
     draw();
