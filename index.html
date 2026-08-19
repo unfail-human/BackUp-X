@@ -16,7 +16,7 @@
 <meta name="twitter:image" content="https://unfail-human.github.io/BackUp-X/og-image.png">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="apple-touch-icon" href="./favicon.png">
-<link rel="stylesheet" href="style.css?v=19">
+<link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 <header>
@@ -34,7 +34,7 @@
 <h3>01 · 내 타래 가져오기</h3>
 <label>첫 트윗 링크</label>
 <input id="url" placeholder="https://x.com/my_id/status/…">
-<button id="load">첫 트윗 불러오기</button>
+<button id="load" disabled>첫 트윗 불러오기</button>
 <div id="status" class="import-status" aria-live="polite" hidden>
 <i>
 </i>
@@ -105,8 +105,11 @@
 <div class="notice-kicker">BACKUP-X UPDATE</div>
 <h2 id="noticeTitle">새로운 기능이 추가됐어요</h2>
 <div class="notice-content">
-<b>VER. 1.8</b>
+<b>VER. 1.9</b>
 <ul>
+<li>공개 정보에서 확인되는 연결 타래 자동 수집</li>
+<li>게시글 하단의 원형 + 삽입 버튼</li>
+<li>트윗 링크 입력 상태에 따른 불러오기 버튼 활성화</li>
 <li>게시글별 + 버튼으로 누락된 트윗을 원하는 위치에 삽입</li>
 <li>이미지 전체 비율 크기 조절</li>
 <li>단색·그라데이션·이미지 배경 설정</li>
@@ -166,7 +169,7 @@
 </div>
 </section>
 </div>
-<script src="app.js?v=19">
+<script src="app.js?v=20">
 </script>
 </body>
 </html>
