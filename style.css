@@ -139,3 +139,11 @@ header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacin
 .editor nav .save-png:active{transform:translateY(0);box-shadow:none}
 .editor nav .save-png:disabled{cursor:wait;opacity:.72}
 @media(max-width:760px){.editor nav .save-png,.editor nav .copy-rich{margin-left:auto}}
+
+/* 2026-08-19 · 게시글 편집과 동일한 DOM 기반 이미지 미리보기 */
+#imageView{padding:28px;overflow:auto;background:#e3dfd8}
+#imageCapture{width:max-content;min-width:100%;padding:28px;background:linear-gradient(var(--capture-angle,135deg),var(--capture-bg-1,#f6f2eb),var(--capture-bg-2,#ded4c7));box-sizing:border-box}
+#imagePreviewContent{margin:auto;box-sizing:border-box}
+#imagePreviewContent .preview-text{display:block;width:100%;min-height:44px;margin-top:7px;padding:6px 7px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text);font-family:var(--active-font);font-size:var(--tweet-font-size);line-height:1.65;letter-spacing:-.015em;white-space:pre-wrap;overflow-wrap:anywhere}
+#imagePreviewContent .tweet-media img{pointer-events:none}
+@media(max-width:760px){#imageView{padding:14px}#imageCapture{padding:16px}}
