@@ -122,3 +122,10 @@ nav button{min-height:35px;padding:8px 12px;font-size:12px}
 .tweet-media-tools label,.tweet-media-tools button{padding:6px 9px;font-size:9px}
 @media(max-width:900px){main{justify-items:start}.app{width:860px;min-width:860px;margin:0}.hero{width:860px;min-width:860px;margin:0}}
 @media(max-width:760px){body{overflow:auto}header{height:58px;padding:0 15px}header b{font-size:18px}.brand-sparkle{width:28px;height:28px;flex-basis:28px}main{height:auto;min-height:calc(100vh - 58px);display:block;padding:10px 8px 24px}.app{grid-template-columns:1fr;width:auto;min-width:0;margin:0 8px}.hero{width:auto;min-width:0;margin:0 8px}.hero h1{font-size:19px}aside{padding:20px 17px 25px}#textView{padding:16px}.editor nav{flex-wrap:wrap}.editor nav .copy-rich{margin-left:0}}
+
+
+/* 2026-08-19 · WeLog와 동일한 헤더 브랜드 규격 */
+header .brand{display:flex;align-items:baseline;gap:8px;color:#26231f;text-decoration:none;font-family:Georgia,"Times New Roman",serif;white-space:nowrap}
+header .brand span{display:inline;color:#b69a62;font:400 13px/1 Georgia,"Times New Roman",serif}
+header .brand b{display:inline;font:700 16px/1 Georgia,"Times New Roman",serif;letter-spacing:0;color:#26231f}
+header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacing:.2em;color:#978e82;white-space:nowrap}
