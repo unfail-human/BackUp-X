@@ -4,7 +4,7 @@ const tweets = [
 ];
 const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
-const NOTICE_VERSION = "1.9";
+const NOTICE_VERSION = "2.0";
 let avatarData = "";
 let avatarImage = null;
 let backgroundData = "";
@@ -81,12 +81,12 @@ function render() {
   view.innerHTML = tweets.map((tweet, index) => `
     <article class="tweet">
       <div class="avatar">${avatarData ? `<img src="${avatarData}" alt="프로필 사진">` : "BU"}</div>
-      <div>
+      <div class="tweet-body">
         <div class="tweet-head"><div class="meta"><b>${tweet.name}</b>${tweet.handle} · ${tweet.date}</div></div>
         <textarea data-i="${index}">${tweet.text}</textarea>
         ${tweet.media?.length ? `<div class="tweet-media">${tweet.media.map((src) => `<img src="${src}" alt="트윗 첨부 이미지" loading="lazy">`).join("")}</div>` : ""}
         <div class="tweet-media-tools"><label>원본 사진 ${tweet.media?.length ? "교체" : "추가"}<input type="file" accept="image/*" multiple data-media-i="${index}"></label>${tweet.media?.length ? `<button type="button" data-clear-media="${index}">사진 모두 지우기</button>` : ""}</div>
-        <div class="insert-row"><button type="button" class="insert-toggle" data-open-insert="${index}" aria-label="이 게시글 다음에 트윗 추가">+</button></div>
+        <div class="tweet-actions"><button type="button" class="insert-toggle" data-open-insert="${index}" aria-label="이 게시글 다음에 트윗 추가">+</button>${index > 0 ? `<button type="button" class="delete-tweet" data-delete-tweet="${index}" aria-label="이 게시글 삭제">×</button>` : ""}</div>
         <div class="thread-insert" data-insert-box="${index}" hidden><input data-insert-url="${index}" placeholder="이 다음에 넣을 누락 트윗 링크"><button type="button" data-insert-go="${index}">추가</button></div>
       </div>
     </article>`).join("");
@@ -115,6 +115,13 @@ function render() {
       const box = view.querySelector(`[data-insert-box="${button.dataset.openInsert}"]`);
       box.hidden = !box.hidden;
       if (!box.hidden) box.querySelector("input").focus();
+    };
+  });
+  view.querySelectorAll("[data-delete-tweet]").forEach((button) => {
+    button.onclick = () => {
+      tweets.splice(Number(button.dataset.deleteTweet), 1);
+      render(); draw(); scheduleSave();
+      setImportStatus("done", `게시글 삭제 완료 · 총 ${tweets.length}개`, 100);
     };
   });
   view.querySelectorAll("[data-insert-go]").forEach((button) => {
@@ -318,32 +325,64 @@ function parseOEmbed(data) {
     linkedPosts
   };
 }
+function tweetIdFromUrl(url) {
+  return url.match(/status\/(\d+)/)?.[1] || "";
+}
+function formatTweetDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value || "" : new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+function fxStatusToItem(status) {
+  const author = status.author || {};
+  const media = status.media?.all || status.media?.photos || [];
+  return {
+    name: author.name || author.screen_name || "이름 없음",
+    handle: "@" + (author.screen_name || "unknown"),
+    date: formatTweetDate(status.created_at),
+    text: status.text || "",
+    media: [...new Set(media.filter((item) => item.type === "photo" || item.type === "gif").map((item) => item.url).filter(Boolean))]
+  };
+}
+async function loadFxThread(url) {
+  const id = tweetIdFromUrl(url);
+  const response = await fetch(`https://api.fxtwitter.com/2/thread/${id}`);
+  if (!response.ok) throw new Error("thread failed");
+  const data = await response.json();
+  if (data.code && data.code !== 200) throw new Error("thread unavailable");
+  const statuses = (data.thread?.length ? data.thread : [data.status]).filter((item) => item?.type === "status");
+  if (!statuses.length) throw new Error("thread unavailable");
+  return { statuses, status: data.status || statuses[0], author: data.author || data.status?.author || statuses[0]?.author };
+}
 async function importLinkedTweet(url, insertAfter = null) {
   if (!isTweetUrl(url)) throw new Error("invalid url");
   const inserting = Number.isInteger(insertAfter);
   setImportStatus("", inserting ? "누락 트윗 불러오는 중" : "첫 트윗 불러오는 중", 25);
-  const tweet = parseOEmbed(await loadOEmbed(url));
-  const handle = "@" + tweet.username;
-  if (inserting && tweets.length && tweets[0].handle.toLowerCase() !== handle.toLowerCase()) throw new Error("different author");
-  const item = { name: tweet.name, handle, date: tweet.date, text: tweet.text, media: [] };
-  if (inserting) tweets.splice(insertAfter + 1, 0, item);
-  else {
-    const imported = [item];
-    const seen = new Set([url.split("?")[0]]);
-    const queue = [...tweet.linkedPosts];
-    while (queue.length && imported.length < 20) {
-      const linkedUrl = queue.shift();
-      if (seen.has(linkedUrl)) continue;
-      seen.add(linkedUrl);
-      try {
-        setImportStatus("", `연결된 타래 확인 중 · ${imported.length + 1}개`, Math.min(90, 35 + imported.length * 8));
-        const linked = parseOEmbed(await loadOEmbed(linkedUrl));
-        if (("@" + linked.username).toLowerCase() !== handle.toLowerCase()) continue;
-        imported.push({ name: linked.name, handle: "@" + linked.username, date: linked.date, text: linked.text, media: [] });
-        queue.push(...linked.linkedPosts);
-      } catch {}
+  let imported;
+  let importedAuthor;
+  try {
+    setImportStatus("", inserting ? "누락 트윗 확인 중" : "이어지는 타래 확인 중", 55);
+    const fx = await loadFxThread(url);
+    importedAuthor = fx.author;
+    if (inserting) {
+      const exact = fx.statuses.find((status) => status.id === tweetIdFromUrl(url)) || fx.status;
+      imported = [fxStatusToItem(exact)];
+    } else {
+      const rootAuthor = fx.statuses[0]?.author?.screen_name?.toLowerCase();
+      imported = fx.statuses.filter((status) => status.author?.screen_name?.toLowerCase() === rootAuthor).slice(0, 30).map(fxStatusToItem);
     }
-    tweets.splice(0, tweets.length, ...imported);
+  } catch {
+    const tweet = parseOEmbed(await loadOEmbed(url));
+    imported = [{ name: tweet.name, handle: "@" + tweet.username, date: tweet.date, text: tweet.text, media: [] }];
+  }
+  if (inserting && tweets.length && tweets[0].handle.toLowerCase() !== imported[0].handle.toLowerCase()) throw new Error("different author");
+  if (inserting) tweets.splice(insertAfter + 1, 0, imported[0]);
+  else tweets.splice(0, tweets.length, ...imported);
+  if (importedAuthor?.avatar_url) {
+    avatarData = importedAuthor.avatar_url;
+    avatarImage = new Image();
+    avatarImage.crossOrigin = "anonymous";
+    avatarImage.onload = draw;
+    avatarImage.src = avatarData;
   }
   render();
   draw();
