@@ -131,7 +131,7 @@ function render() {
     <article class="tweet">
       <div class="avatar">${avatarData ? `<img src="${avatarData}" alt="프로필 사진">` : "BU"}</div>
       <div class="tweet-body">
-        <div class="tweet-head"><div class="meta"><b>${tweet.name}</b>${tweet.handle} · ${tweet.date}</div></div>
+        <div class="tweet-head"><div class="meta"><b class="meta-name">${tweet.name}</b><span class="meta-sub">${tweet.handle}<i>·</i>${tweet.date}</span></div></div>
         <textarea data-i="${index}">${tweet.text}</textarea>
         ${tweet.media?.length ? `<div class="tweet-media">${tweet.media.map((src) => `<img src="${src}" alt="트윗 첨부 이미지" loading="lazy">`).join("")}</div>` : ""}
         <div class="tweet-media-tools"><label>원본 사진 ${tweet.media?.length ? "교체" : "추가"}<input type="file" accept="image/*" multiple data-media-i="${index}"></label>${tweet.media?.length ? `<button type="button" data-clear-media="${index}">사진 모두 지우기</button>` : ""}</div>
@@ -377,7 +377,7 @@ function recommendedPalette(main) {
   };
 }
 function sitePalette(main) {
-  if (main.toLowerCase() === "#9b8f7f") return { background: "#f6f2eb", panel: "#eee8df" };
+  if (main.toLowerCase() === "#9b8f7f") return { background: "#dedbd4", panel: "#fbfaf8" };
   return { background: mixColors(main, "#ffffff", .9), panel: mixColors(main, "#ffffff", .82) };
 }
 function applySiteTheme(main) {
