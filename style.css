@@ -97,7 +97,7 @@ hr{margin:18px 0}
 .gradient-angle b{font-size:9px}
 .editor nav{gap:6px;padding:10px 14px}
 nav button{min-height:35px;padding:8px 12px;font-size:12px}
-#textView{padding:22px 28px 28px;background:linear-gradient(var(--image-angle,135deg),var(--image-bg-1,#f6f2eb),var(--image-bg-2,#ded4c7))}
+#textView{padding:22px 28px 28px;background:color-mix(in srgb,var(--panel) 22%,#fff)}
 .tweet{grid-template-columns:46px minmax(0,1fr);gap:13px;padding:18px 15px 16px;background:var(--image-card,#eee8df)}
 .tweet:first-child{border-radius:18px 18px 0 0}.tweet:last-child{border-radius:0 0 18px 18px}.tweet:only-child{border-radius:18px}
 .avatar{width:42px;height:42px;font-size:12px}
@@ -129,3 +129,6 @@ header .brand{display:flex;align-items:baseline;gap:8px;color:#26231f;text-decor
 header .brand span{display:inline;color:#b69a62;font:400 13px/1 Georgia,"Times New Roman",serif}
 header .brand b{display:inline;font:700 16px/1 Georgia,"Times New Roman",serif;letter-spacing:0;color:#26231f}
 header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacing:.2em;color:#978e82;white-space:nowrap}
+
+/* 2026-08-19 · 이미지 전용 그라데이션 섹션 */
+.image-card-title{margin:0 0 4px}.image-card-help{margin:0 0 10px;color:var(--muted);font-size:9px;line-height:1.5}
