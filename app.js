@@ -715,7 +715,10 @@ function renderImagePreview() {
   const clone = view.cloneNode(true);
   clone.id = "imagePreviewContent";
   clone.hidden = false;
-  clone.style.width = Math.ceil(view.getBoundingClientRect().width) + "px";
+  const measuredWidth = Math.ceil(view.getBoundingClientRect().width);
+  if (measuredWidth > 0) view.dataset.previewWidth = String(measuredWidth);
+  const previewWidth = measuredWidth || Number(view.dataset.previewWidth) || Math.ceil($(".editor").getBoundingClientRect().width);
+  clone.style.width = previewWidth + "px";
   clone.querySelectorAll(".tweet-actions,.tweet-media-tools,.thread-insert").forEach((item) => item.remove());
   clone.querySelectorAll("textarea").forEach((area) => {
     const text = document.createElement("div");
@@ -793,6 +796,7 @@ $("#png").onclick = async () => {
     }
     if (id === "textSize") $("#textSizeValue").textContent = $("#textSize").value + "px";
     draw();
+    if (!$("#imageView").hidden) renderImagePreview();
     scheduleSave();
   };
 });
