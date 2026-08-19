@@ -16,7 +16,7 @@
 <meta name="twitter:image" content="https://unfail-human.github.io/BackUp-X/og-image.png">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="apple-touch-icon" href="./favicon.png">
-<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
 <header>
@@ -43,10 +43,7 @@
 <b>
 </b>
 </div>
-<label>다음 트윗 링크</label>
-<input id="nextUrl" placeholder="같은 타래의 다음 트윗 링크">
-<button id="addTweet">다음 트윗 추가</button>
-<p class="archive-help">공개 트윗만 가져올 수 있어요. 사진은 불러온 뒤 각 트윗에서 원본으로 추가·교체할 수 있습니다.</p>
+<p class="archive-help">공개 트윗만 가져올 수 있어요. 누락된 트윗은 게시글 오른쪽의 + 버튼으로 추가하세요.</p>
 <hr>
 <h3>02 · 이미지 편집</h3>
 <label>프로필 사진<input id="avatarFile" type="file" accept="image/*">
@@ -70,20 +67,24 @@
 </label>
 </div>
 <button id="resetColors" class="reset-colors" type="button">색상 초기화</button>
-<label>편집 화면 글자 크기 <input id="size" type="range" min="12" max="24" value="16">
+<label>배경 방식<select id="bgMode"><option value="solid">단색</option><option value="gradient">그라데이션</option><option value="image">이미지</option></select>
 </label>
-<label>이미지 본문 크기 <span id="imageSizeValue">14px</span><input id="imageSize" type="range" min="10" max="20" value="14">
+<label id="gradientColorField" hidden>그라데이션 끝 색상<input id="bg2" type="color" value="#b8a895">
+</label>
+<label id="backgroundImageField" hidden>배경 이미지<input id="backgroundFile" type="file" accept="image/*">
+</label>
+<button id="clearBackground" class="reset-colors" type="button" hidden>배경 이미지 삭제</button>
+<label>이미지 전체 크기 <span id="imageScaleValue">100%</span><input id="imageScale" type="range" min="60" max="140" value="100">
 </label>
 <label>
 <input id="profile" type="checkbox" checked> 프로필 정보 표시</label>
 <label>
 <input id="date" type="checkbox" checked> 날짜와 시간 표시</label>
-<label>
-<input id="link" type="checkbox" checked> 원문 링크 표시</label>
+<label><input id="link" type="checkbox" checked> 이미지 최하단에 원문 트윗 링크 표시</label>
 </aside>
 <section class="editor">
 <nav>
-<button data-tab="text" class="on">텍스트 편집</button>
+<button data-tab="text" class="on">게시글 편집</button>
 <button data-tab="image">이미지 미리보기</button>
 <button id="rich" class="copy-rich">서식 복사</button>
 </nav>
@@ -104,10 +105,13 @@
 <div class="notice-kicker">BACKUP-X UPDATE</div>
 <h2 id="noticeTitle">새로운 기능이 추가됐어요</h2>
 <div class="notice-content">
-<b>VER. 1.7</b>
+<b>VER. 1.8</b>
 <ul>
+<li>게시글별 + 버튼으로 누락된 트윗을 원하는 위치에 삽입</li>
+<li>이미지 전체 비율 크기 조절</li>
+<li>단색·그라데이션·이미지 배경 설정</li>
 <li>트윗 링크만으로 본문·닉네임·아이디·날짜 가져오기</li>
-<li>다음 트윗 링크를 추가해 타래 순서 구성</li>
+<li>게시글별 + 버튼으로 타래 순서 구성</li>
 <li>각 트윗의 원본 사진 여러 장 추가·교체</li>
 <li>색상 설정 UI와 추천 팔레트 개선</li>
 <li>생성 이미지 본문 크기 별도 조절</li>
@@ -162,7 +166,7 @@
 </div>
 </section>
 </div>
-<script src="app.js?v=18">
+<script src="app.js?v=19">
 </script>
 </body>
 </html>
