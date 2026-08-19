@@ -16,7 +16,7 @@
 <meta name="twitter:image" content="https://unfail-human.github.io/BackUp-X/og-image.png">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="apple-touch-icon" href="./favicon.png">
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
 <header>
@@ -31,16 +31,10 @@
 <main>
 <section class="app">
 <aside>
-<h3>01 · X 아카이브 가져오기</h3>
-<label class="archive-upload">X 데이터 아카이브 ZIP
-<input id="archiveFile" type="file" accept=".zip,application/zip">
-<span>ZIP 파일 선택</span>
-</label>
-<p class="archive-help">파일은 서버로 전송되지 않고 이 브라우저에서만 열어요.</p>
-<div id="archiveStatus" class="import-status" aria-live="polite" hidden><i></i><span></span><b></b></div>
-<label>백업할 첫 트윗 링크</label>
+<h3>01 · 내 타래 가져오기</h3>
+<label>첫 트윗 링크</label>
 <input id="url" placeholder="https://x.com/my_id/status/…">
-<button id="load">아카이브에서 타래 찾기</button>
+<button id="load">첫 트윗 불러오기</button>
 <div id="status" class="import-status" aria-live="polite" hidden>
 <i>
 </i>
@@ -49,7 +43,10 @@
 <b>
 </b>
 </div>
-<p class="archive-help">ZIP을 먼저 불러온 뒤, 타래의 첫 트윗 링크를 입력하세요.</p>
+<label>다음 트윗 링크</label>
+<input id="nextUrl" placeholder="같은 타래의 다음 트윗 링크">
+<button id="addTweet">다음 트윗 추가</button>
+<p class="archive-help">공개 트윗만 가져올 수 있어요. 사진은 불러온 뒤 각 트윗에서 원본으로 추가·교체할 수 있습니다.</p>
 <hr>
 <h3>02 · 이미지 편집</h3>
 <label>프로필 사진<input id="avatarFile" type="file" accept="image/*">
@@ -64,7 +61,7 @@
 <div class="theme-row">
 <label>메인 테마색<input id="mainColor" type="color" value="#9b8f7f">
 </label>
-<button id="recommendColors" type="button" title="색상 자동 추천" aria-label="색상 자동 추천">✓</button>
+<label class="auto-palette"><span><b>자동 추천 팔레트</b><small>메인 색상에 맞춰 배경·카드색을 자동 조정</small></span><input id="recommendColors" type="checkbox" checked></label>
 </div>
 <div class="colors">
 <label>배경색<input id="bg" type="color" value="#d2c7b8">
@@ -108,9 +105,11 @@
 <div class="notice-kicker">BACKUP-X UPDATE</div>
 <h2 id="noticeTitle">새로운 기능이 추가됐어요</h2>
 <div class="notice-content">
-<b>VER. 1.6</b>
+<b>VER. 1.7</b>
 <ul>
-<li>X 데이터 아카이브 ZIP에서 내 타래와 사진 가져오기</li>
+<li>트윗 링크만으로 본문·닉네임·아이디·날짜 가져오기</li>
+<li>다음 트윗 링크를 추가해 타래 순서 구성</li>
+<li>각 트윗의 원본 사진 여러 장 추가·교체</li>
 <li>색상 설정 UI와 추천 팔레트 개선</li>
 <li>생성 이미지 본문 크기 별도 조절</li>
 <li>작업 내용 자동 저장 및 업데이트 후 자동 복원</li>
@@ -164,8 +163,7 @@
 </div>
 </section>
 </div>
-<script src="fflate.min.js?v=1"></script>
-<script src="app.js?v=16">
+<script src="app.js?v=17">
 </script>
 </body>
 </html>
