@@ -70,7 +70,6 @@ async function loadWorkspace() {
     $("#gradientAngleValue").textContent = $("#gradientAngle").value + "°";
     updateLoadButton();
     if (saved.recommendColors != null) $("#recommendColors").checked = saved.recommendColors;
-    applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
     $("#textSizeValue").textContent = $("#textSize").value + "px";
     applyTypography();
     updateBackgroundControls();
@@ -372,15 +371,6 @@ function recommendedPalette(main) {
     card: mixColors(main, "#ffffff", .78)
   };
 }
-function applySiteTheme(main, background, card) {
-  const root = document.documentElement;
-  root.style.setProperty("--theme", main);
-  root.style.setProperty("--theme-soft", mixColors(main, "#ffffff", .72));
-  root.style.setProperty("--theme-text", luminance(main) < .38 ? "#ffffff" : "#2e2c29");
-  root.style.setProperty("--work", background);
-  root.style.setProperty("--panel", card);
-  document.body.style.background = background;
-}
 function applyRecommendedColors() {
   const main = $("#mainColor").value;
   const palette = recommendedPalette(main);
@@ -388,7 +378,6 @@ function applyRecommendedColors() {
   $("#gradientStart").value = palette.background;
   $("#bg2").value = mixColors(main, "#ffffff", .32);
   $("#card").value = palette.card;
-  applySiteTheme(main, palette.background, palette.card);
   updateGradientPreview();
   draw();
   scheduleSave();
@@ -410,7 +399,6 @@ $("#resetColors").onclick = () => {
   backgroundImage = null;
   $("#recommendColors").checked = true;
   updateBackgroundControls();
-  applySiteTheme("#9b8f7f", "#d2c7b8", "#e8dfd3");
   draw();
   scheduleSave();
 };
@@ -427,7 +415,6 @@ function updateGradientPreview() {
 $("#gradientStart").oninput = () => {
   $("#bg").value = $("#gradientStart").value;
   $("#recommendColors").checked = false;
-  applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
   updateGradientPreview(); draw(); scheduleSave();
 };
 $("#gradientAngle").oninput = () => {
