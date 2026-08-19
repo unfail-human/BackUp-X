@@ -3,7 +3,7 @@
 @font-face{font-family:"Noto Sans KR";src:url("./webfonts/NotoSansKR-VariableFont_wght.woff2?v=39") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:"KoPub Dotum Medium";src:url("https://raw.githubusercontent.com/unfail-human/DearLog/main/KoPubWorld%20Dotum%20Medium.ttf") format("truetype");font-weight:500;font-style:normal;font-display:swap}
 @font-face{font-family:"KoPub Batang Medium";src:url("https://raw.githubusercontent.com/unfail-human/DearLog/main/KoPubWorld%20Batang%20Medium.ttf") format("truetype");font-weight:500;font-style:normal;font-display:swap}
-:root{--line:#e6e2db;--line-strong:#d7d2ca;--text:#2e2c29;--muted:#918d86;--panel:#fbfaf8;--work:#dedbd4;--white:#fff;--soft:#f3f0eb;--hover:#efede8;--theme:#9b8f7f;--theme-soft:#d8cec2;--theme-text:#2e2c29;--active-font:"온글잎 박다현체",sans-serif;--tweet-font-size:15px;--shadow:0 16px 52px rgba(40,35,30,.09)}
+:root{--line:#e6e2db;--line-strong:#d7d2ca;--text:#2e2c29;--muted:#918d86;--panel:#fbfaf8;--work:#dedbd4;--white:#fff;--soft:#f3f0eb;--hover:#efede8;--theme:#9b8f7f;--theme-soft:#d8cec2;--theme-text:#2e2c29;--active-font:"Pretendard Variable",sans-serif;--tweet-font-size:15px;--shadow:0 16px 52px rgba(40,35,30,.09)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;min-height:100%}
@@ -61,62 +61,62 @@ canvas{display:block;width:min(100%,720px);height:auto;margin:auto;border:1px so
 
 
 /* 2026-08-19 · 전체 UI 가독성 확대 */
-body{font-size:19px}
-header{height:74px;padding:0 30px}
-header b{font-size:19px;gap:10px}
-header span{font-size:16px}
-.brand-sparkle{width:18px;height:18px;flex-basis:18px}
-main{padding:31px 26px 60px}
-.hero{max-width:1280px;padding:24px 2px 20px}
-.hero small{font-size:16px}
-.hero h1{font-size:32px;margin:9px 0 8px}
-.hero p{font-size:16px}
-.app{max-width:1280px;min-height:750px;grid-template-columns:410px minmax(0,1fr)}
-aside{padding:35px 31px 46px}
-h3{font-size:19px;margin-bottom:21px}
-label{font-size:19px;margin:18px 0}
-input:not([type=checkbox]):not([type=color]),select{min-height:54px;margin-top:10px;padding:13px 15px;font-size:19px}
-aside>button{min-height:54px;margin-top:14px;font-size:19px}
-.import-status{grid-template-columns:20px 1fr auto;min-height:47px;padding:12px 14px;font-size:16px}
-.import-status b{font-size:16px}
-.import-status.done i:before{font-size:19px}
-.import-status.error i:before{font-size:16px}
-hr{margin:33px 0}
-.auto-palette{padding:14px 0}
+body{font-size:17px}
+header{height:68px;padding:0 27px}
+header b{font-size:17px;gap:9px}
+header span{font-size:14px}
+.brand-sparkle{width:16px;height:16px;flex-basis:16px}
+main{padding:27px 23px 52px}
+.hero{max-width:1220px;padding:20px 2px 17px}
+.hero small{font-size:14px}
+.hero h1{font-size:28px;margin:8px 0 7px}
+.hero p{font-size:14px}
+.app{max-width:1220px;min-height:700px;grid-template-columns:380px minmax(0,1fr)}
+aside{padding:31px 27px 40px}
+h3{font-size:17px;margin-bottom:18px}
+label{font-size:17px;margin:16px 0}
+input:not([type=checkbox]):not([type=color]),select{min-height:50px;margin-top:9px;padding:11px 13px;font-size:17px}
+aside>button{min-height:50px;margin-top:12px;font-size:17px}
+.import-status{grid-template-columns:18px 1fr auto;min-height:43px;padding:10px 12px;font-size:14px}
+.import-status b{font-size:14px}
+.import-status.done i:before{font-size:17px}
+.import-status.error i:before{font-size:14px}
+hr{margin:29px 0}
+.auto-palette{padding:12px 0}
 .auto-palette span{gap:4px}
-.auto-palette b{font-size:19px}
-.auto-palette small{font-size:16px;line-height:1.45}
-.auto-palette input{width:21px!important;height:21px!important;flex-basis:21px}
-.reset-colors{min-height:47px!important}
-.archive-help{margin:11px 0 16px;font-size:16px;line-height:1.6}
-.archive-upload span{min-height:54px;font-size:19px}
-.theme-row>label:first-child input,.gradient-colors input{height:46px}
-.colors input{height:44px}
-.gradient-panel{gap:15px;padding:16px}
-.gradient-preview{height:66px}
-.gradient-angle b{font-size:16px}
-.editor nav{gap:9px;padding:19px 24px}
-nav button{min-height:50px;padding:12px 20px;font-size:19px}
-#textView{padding:28px 36px 41px}
-.tweet{grid-template-columns:51px minmax(0,1fr);gap:17px;padding:26px 21px 24px}
-.avatar{width:47px;height:47px;font-size:16px}
-.tweet-actions button{width:37px;height:37px;flex-basis:37px;font-size:19px}
-.thread-insert{gap:9px;padding:13px}
-.thread-insert input{min-height:49px!important}
-.thread-insert button{min-height:49px;padding:0 18px;font-size:19px}
-.editor footer{padding:19px 24px}
-.editor footer button{min-width:124px;min-height:50px;padding:12px 18px;font-size:19px}
-.photo-editor-head small{font-size:16px}
-.photo-editor-head h2{font-size:27px}
-.photo-editor-head p{font-size:16px}
-.photo-editor-controls label b{font-size:16px}
-.photo-editor-controls button,.photo-editor-actions button{padding:13px 17px;font-size:19px}
-.photo-editor-preview{font-size:16px}
-.notice-kicker{font-size:16px}
-.notice-modal h2{font-size:27px}
-.notice-content{font-size:19px}
-.notice-content b{font-size:16px}
-.notice-check{font-size:16px}
-.notice-modal>button{padding:14px;font-size:19px}
-.tweet-media-tools label,.tweet-media-tools button{padding:9px 13px;font-size:16px}
-@media(max-width:760px){header{height:66px;padding:0 18px}.app{grid-template-columns:1fr;margin:0 12px}.hero h1{font-size:29px}aside{padding:28px 23px 37px}#textView{padding:17px}.editor nav{flex-wrap:wrap}.editor nav .copy-rich{margin-left:0}}
+.auto-palette b{font-size:17px}
+.auto-palette small{font-size:14px;line-height:1.45}
+.auto-palette input{width:19px!important;height:19px!important;flex-basis:19px}
+.reset-colors{min-height:43px!important}
+.archive-help{margin:10px 0 14px;font-size:14px;line-height:1.6}
+.archive-upload span{min-height:50px;font-size:17px}
+.theme-row>label:first-child input,.gradient-colors input{height:42px}
+.colors input{height:40px}
+.gradient-panel{gap:13px;padding:14px}
+.gradient-preview{height:60px}
+.gradient-angle b{font-size:14px}
+.editor nav{gap:8px;padding:17px 22px}
+nav button{min-height:46px;padding:11px 18px;font-size:17px}
+#textView{padding:25px 32px 36px}
+.tweet{grid-template-columns:50px minmax(0,1fr);gap:16px;padding:23px 20px 21px}
+.avatar{width:46px;height:46px;font-size:14px}
+.tweet-actions button{width:34px;height:34px;flex-basis:34px;font-size:17px}
+.thread-insert{gap:8px;padding:11px}
+.thread-insert input{min-height:45px!important}
+.thread-insert button{min-height:45px;padding:0 16px;font-size:17px}
+.editor footer{padding:17px 22px}
+.editor footer button{min-width:112px;min-height:46px;padding:11px 16px;font-size:17px}
+.photo-editor-head small{font-size:14px}
+.photo-editor-head h2{font-size:24px}
+.photo-editor-head p{font-size:14px}
+.photo-editor-controls label b{font-size:14px}
+.photo-editor-controls button,.photo-editor-actions button{padding:11px 15px;font-size:17px}
+.photo-editor-preview{font-size:14px}
+.notice-kicker{font-size:14px}
+.notice-modal h2{font-size:24px}
+.notice-content{font-size:17px}
+.notice-content b{font-size:14px}
+.notice-check{font-size:14px}
+.notice-modal>button{padding:12px;font-size:17px}
+.tweet-media-tools label,.tweet-media-tools button{padding:8px 11px;font-size:14px}
+@media(max-width:760px){header{height:62px;padding:0 17px}.app{grid-template-columns:1fr;margin:0 12px}.hero h1{font-size:26px}aside{padding:25px 21px 34px}#textView{padding:15px}.editor nav{flex-wrap:wrap}.editor nav .copy-rich{margin-left:0}}
