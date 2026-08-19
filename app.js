@@ -378,7 +378,6 @@ function exportHtml() {
     ${link ? `<p>원문: <a href="${url}">${url}</a></p>` : ""}
   </section>`;
 }
-$("#html").onclick = () => navigator.clipboard.writeText(exportHtml());
 $("#rich").onclick = () => navigator.clipboard.write([new ClipboardItem({
   "text/html": new Blob([exportHtml()], { type: "text/html" }),
   "text/plain": new Blob([tweets.map((tweet) => tweet.text).join("\n\n")], { type: "text/plain" })
@@ -506,15 +505,15 @@ async function draw() {
   }
 }
 
-document.querySelectorAll("nav button").forEach((button) => button.onclick = () => {
-  document.querySelectorAll("nav button").forEach((item) => item.classList.remove("on"));
+document.querySelectorAll("nav button[data-tab]").forEach((button) => button.onclick = () => {
+  document.querySelectorAll("nav button[data-tab]").forEach((item) => item.classList.remove("on"));
   button.classList.add("on");
   const imageMode = button.dataset.tab === "image";
   view.hidden = imageMode;
   $("#imageView").hidden = !imageMode;
-  $("#html").hidden = imageMode;
   $("#rich").hidden = imageMode;
   $("#png").hidden = !imageMode;
+  document.querySelector(".editor footer").hidden = !imageMode;
   if (imageMode) draw();
 });
 $("#png").onclick = async () => {
