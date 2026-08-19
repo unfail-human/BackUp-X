@@ -74,7 +74,7 @@ async function loadWorkspace() {
     if (saved.font === "KoPub Dotum") $("#font").value = "KoPub Dotum Medium";
     if (saved.font === "KoPub Batang") $("#font").value = "KoPub Batang Medium";
     if (saved.font === "Pretendard") $("#font").value = "Pretendard Variable";
-    if (!saved.font || saved.font === "Pretendard Variable") $("#font").value = "온글잎 박다현체";
+    if (!saved.font || saved.font === "온글잎 박다현체") $("#font").value = "Pretendard Variable";
     $("#gradientStart").value = $("#bg").value;
     $("#gradientAngleValue").textContent = $("#gradientAngle").value + "°";
     updateLoadButton();
