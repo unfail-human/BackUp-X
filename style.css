@@ -8,6 +8,7 @@
 @font-face{font-family:"KoPub Batang";src:url("./webfonts/KoPubWorld Batang Bold.woff2") format("woff2");font-weight:700}
 :root{--line:#e0d8ce;--line-strong:#cfc3b6;--text:#2e2c29;--muted:#81796f;--panel:#e8dfd3;--work:#d2c7b8;--white:#fff;--soft:#eee7de;--hover:#e4dbd0;--theme:#9b8f7f;--theme-soft:#cfc2b3;--theme-text:#2e2c29;--shadow:0 16px 52px rgba(40,35,30,.12)}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;min-height:100%}
 body{font-family:Pretendard,"Noto Sans KR",sans-serif;color:var(--text);background:var(--work);font-size:13px;letter-spacing:-.012em}
 button,input,textarea,select{font:inherit;color:inherit}
@@ -50,6 +51,7 @@ nav button.on{background:var(--theme-soft);border-color:color-mix(in srgb,var(--
 .avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#e9e5de;color:#5d5851;font-size:10px;font-weight:800;overflow:hidden}
 .avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
 .meta{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tweet-head{display:flex;align-items:center;gap:10px}.tweet-head .meta{flex:1;min-width:0}.insert-toggle{display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;border:1px solid var(--line);border-radius:6px;background:#fff;color:#706960;font-size:15px;line-height:1}.insert-toggle:hover{background:var(--theme-soft)}.thread-insert{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:9px;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--soft)}.thread-insert input{min-height:32px!important;margin:0!important}.thread-insert button{border:1px solid var(--line-strong);border-radius:6px;background:var(--theme-soft);padding:0 13px;font-size:9px;font-weight:750;color:var(--theme-text)}
 .meta b{font-size:11px;color:var(--text);margin-right:6px}
 .tweet textarea{display:block;width:100%;min-height:104px;margin-top:4px;padding:8px 0;border:1px solid transparent;border-radius:6px;background:transparent;resize:vertical;outline:none;font-family:inherit;font-size:13px;line-height:1.75;letter-spacing:-.015em}
 .tweet textarea:hover{background:#fdfcfb}
