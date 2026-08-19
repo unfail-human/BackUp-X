@@ -710,15 +710,34 @@ async function draw() {
   }
 }
 
+function renderImagePreview() {
+  const capture = $("#imageCapture");
+  const clone = view.cloneNode(true);
+  clone.id = "imagePreviewContent";
+  clone.hidden = false;
+  clone.style.width = Math.ceil(view.getBoundingClientRect().width) + "px";
+  clone.querySelectorAll(".tweet-actions,.tweet-media-tools,.thread-insert").forEach((item) => item.remove());
+  clone.querySelectorAll("textarea").forEach((area) => {
+    const text = document.createElement("div");
+    text.className = "preview-text";
+    text.textContent = area.value;
+    area.replaceWith(text);
+  });
+  capture.replaceChildren(clone);
+  capture.style.setProperty("--capture-angle", $("#gradientAngle").value + "deg");
+  capture.style.setProperty("--capture-bg-1", $("#bg").value);
+  capture.style.setProperty("--capture-bg-2", $("#bg2").value);
+}
+
 document.querySelectorAll("nav button[data-tab]").forEach((button) => button.onclick = () => {
   document.querySelectorAll("nav button[data-tab]").forEach((item) => item.classList.remove("on"));
   button.classList.add("on");
   const imageMode = button.dataset.tab === "image";
+  if (imageMode) renderImagePreview();
   view.hidden = imageMode;
   $("#imageView").hidden = !imageMode;
   $("#rich").hidden = imageMode;
   $("#png").hidden = !imageMode;
-  if (imageMode) draw();
 });
 $("#png").onclick = async () => {
   const button = $("#png");
@@ -726,9 +745,19 @@ $("#png").onclick = async () => {
   button.disabled = true;
   button.textContent = "PNG 만드는 중…";
   try {
+    if (typeof html2canvas !== "function") throw new Error("PNG 저장 모듈을 불러오지 못했습니다.");
     await document.fonts.ready;
-    await draw();
-    const canvas = $("#canvas");
+    renderImagePreview();
+    await Promise.all([...$("#imageCapture").querySelectorAll("img")].map((image) => image.complete ? Promise.resolve() : new Promise((resolve) => {
+      image.onload = image.onerror = resolve;
+    })));
+    const canvas = await html2canvas($("#imageCapture"), {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false
+    });
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob((result) => result ? resolve(result) : reject(new Error("PNG 변환에 실패했습니다.")), "image/png");
     });
