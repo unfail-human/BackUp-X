@@ -158,3 +158,9 @@ header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacin
 #imageView{padding:0;background:transparent}
 #imageCapture{display:block;width:100%;min-width:0;padding:0;background:transparent}
 #imagePreviewContent{width:100%!important;max-width:none;margin:0}
+
+/* 2026-08-20 · 미리보기 서식 여백 */
+#imageView{padding:18px;background:#e3dfd8}
+#imageCapture{width:100%;min-width:0;padding:0;box-sizing:border-box}
+#imagePreviewContent{width:100%!important;border-radius:10px;overflow:hidden;box-shadow:0 8px 24px rgba(45,40,35,.10)}
+@media(max-width:760px){#imageView{padding:12px}}
