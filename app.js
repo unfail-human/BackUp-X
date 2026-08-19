@@ -4,7 +4,7 @@ const tweets = [
 ];
 const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
-const NOTICE_VERSION = "2.2";
+const NOTICE_VERSION = "2.3";
 let avatarData = "";
 let avatarImage = null;
 let backgroundData = "";
@@ -22,10 +22,9 @@ function openWorkspaceDb() {
 function workspaceState() {
   return {
     tweets, avatarData, backgroundData, url: $("#url").value, mainColor: $("#mainColor").value,
-    bg: $("#bg").value, bg2: $("#bg2").value, bgMode: $("#bgMode").value,
-    card: $("#card").value, imageScale: $("#imageScale").value, textSize: $("#textSize").value,
-    font: $("#font").value, profile: $("#profile").checked,
-    date: $("#date").checked, link: $("#link").checked,
+    bg: $("#bg").value, bg2: $("#bg2").value, bgMode: $("#bgMode").value, gradientAngle: $("#gradientAngle").value,
+    card: $("#card").value, textSize: $("#textSize").value,
+    font: $("#font").value,
     recommendColors: $("#recommendColors").checked
   };
 }
@@ -63,11 +62,14 @@ async function loadWorkspace() {
     tweets.splice(0, tweets.length, ...(saved.tweets || tweets));
     avatarData = saved.avatarData || "";
     backgroundData = saved.backgroundData || "";
-    for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "card", "imageScale", "textSize", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
+    for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "gradientAngle", "card", "textSize", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
+    if (saved.font === "KoPub Dotum") $("#font").value = "KoPub Dotum Medium";
+    if (saved.font === "KoPub Batang") $("#font").value = "KoPub Batang Medium";
+    $("#gradientStart").value = $("#bg").value;
+    $("#gradientAngleValue").textContent = $("#gradientAngle").value + "°";
     updateLoadButton();
-    for (const id of ["profile", "date", "link", "recommendColors"]) if (saved[id] != null) $("#" + id).checked = saved[id];
+    if (saved.recommendColors != null) $("#recommendColors").checked = saved.recommendColors;
     applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
-    $("#imageScaleValue").textContent = $("#imageScale").value + "%";
     $("#textSizeValue").textContent = $("#textSize").value + "px";
     applyTypography();
     updateBackgroundControls();
@@ -92,9 +94,25 @@ async function ensureFontLoaded(font = $("#font").value) {
   }
 }
 
+const FONT_STACKS = {
+  "Pretendard": '"Pretendard","Pretendard Variable",sans-serif',
+  "Noto Sans KR": '"Noto Sans KR",sans-serif',
+  "KoPub Dotum Light": '"KoPub Dotum Light",sans-serif',
+  "KoPub Dotum Medium": '"KoPub Dotum Medium",sans-serif',
+  "KoPub Dotum Bold": '"KoPub Dotum Bold",sans-serif',
+  "KoPub Batang Light": '"KoPub Batang Light",serif',
+  "KoPub Batang Medium": '"KoPub Batang Medium",serif',
+  "KoPub Batang Bold": '"KoPub Batang Bold",serif',
+  "system-ui": 'system-ui,sans-serif',
+  "Apple SD Gothic Neo": '"Apple SD Gothic Neo",sans-serif',
+  "Malgun Gothic": '"Malgun Gothic",sans-serif',
+  "Arial": 'Arial,sans-serif',
+  "Georgia": 'Georgia,serif'
+};
+
 async function applyTypography() {
   const font = $("#font").value;
-  document.documentElement.style.setProperty("--active-font", `"${font}", sans-serif`);
+  document.documentElement.style.setProperty("--active-font", FONT_STACKS[font] || `"${font}", sans-serif`);
   document.documentElement.style.setProperty("--tweet-font-size", $("#textSize").value + "px");
   await ensureFontLoaded(font);
   document.body.dataset.activeFont = font;
@@ -189,120 +207,6 @@ $("#noticeClose").onclick = () => {
   $("#noticeBackdrop").hidden = true;
 };
 
-const photoEditor = { image: null, zoom: 1, offsetX: 0, offsetY: 0, dragging: false, startX: 0, startY: 0, baseX: 0, baseY: 0 };
-
-function editorMetrics() {
-  const canvas = $("#photoEditorCanvas");
-  const image = photoEditor.image;
-  const base = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
-  const scale = base * photoEditor.zoom;
-  return { canvas, scale, width: image.naturalWidth * scale, height: image.naturalHeight * scale };
-}
-
-function clampPhotoOffset() {
-  if (!photoEditor.image) return;
-  const { canvas, width, height } = editorMetrics();
-  const maxX = Math.max(0, (width - canvas.width) / 2);
-  const maxY = Math.max(0, (height - canvas.height) / 2);
-  photoEditor.offsetX = Math.max(-maxX, Math.min(maxX, photoEditor.offsetX));
-  photoEditor.offsetY = Math.max(-maxY, Math.min(maxY, photoEditor.offsetY));
-}
-
-function drawPhotoEditor() {
-  if (!photoEditor.image) return;
-  clampPhotoOffset();
-  const { canvas, width, height } = editorMetrics();
-  const ctx = canvas.getContext("2d");
-  const x = (canvas.width - width) / 2 + photoEditor.offsetX;
-  const y = (canvas.height - height) / 2 + photoEditor.offsetY;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#dedbd4";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(photoEditor.image, x, y, width, height);
-  const preview = $("#photoEditorPreview");
-  const pctx = preview.getContext("2d");
-  pctx.clearRect(0, 0, preview.width, preview.height);
-  pctx.save();
-  pctx.beginPath();
-  pctx.arc(56, 56, 56, 0, Math.PI * 2);
-  pctx.clip();
-  pctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, 112, 112);
-  pctx.restore();
-  $("#photoEditorZoomValue").textContent = Math.round(photoEditor.zoom * 100) + "%";
-}
-
-function openPhotoEditor(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const image = new Image();
-    image.onload = () => {
-      photoEditor.image = image;
-      photoEditor.zoom = 1;
-      photoEditor.offsetX = 0;
-      photoEditor.offsetY = 0;
-      $("#photoEditorZoom").value = "1";
-      $("#photoEditorBackdrop").hidden = false;
-      drawPhotoEditor();
-    };
-    image.src = reader.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-function closePhotoEditor() {
-  $("#photoEditorBackdrop").hidden = true;
-  $("#avatarFile").value = "";
-}
-
-$("#avatarFile").onchange = (event) => openPhotoEditor(event.target.files[0]);
-$("#photoEditorZoom").oninput = (event) => { photoEditor.zoom = Number(event.target.value); drawPhotoEditor(); };
-$("#photoEditorReset").onclick = () => { photoEditor.zoom = 1; photoEditor.offsetX = 0; photoEditor.offsetY = 0; $("#photoEditorZoom").value = "1"; drawPhotoEditor(); };
-$("#photoEditorCancel").onclick = closePhotoEditor;
-$("#photoEditorClose").onclick = closePhotoEditor;
-$("#photoEditorBackdrop").onclick = (event) => { if (event.target === $("#photoEditorBackdrop")) closePhotoEditor(); };
-$("#photoEditorApply").onclick = () => {
-  const source = $("#photoEditorCanvas");
-  const output = document.createElement("canvas");
-  output.width = 1024;
-  output.height = 1024;
-  output.getContext("2d").drawImage(source, 0, 0, 1024, 1024);
-  avatarData = output.toDataURL("image/png", 1);
-  avatarImage = new Image();
-  avatarImage.onload = () => { render(); draw(); };
-  avatarImage.src = avatarData;
-  closePhotoEditor();
-  scheduleSave();
-};
-
-const photoCanvasWrap = document.querySelector(".photo-editor-canvas-wrap");
-photoCanvasWrap.onpointerdown = (event) => {
-  if (!photoEditor.image || event.button !== 0) return;
-  photoEditor.dragging = true;
-  photoEditor.startX = event.clientX;
-  photoEditor.startY = event.clientY;
-  photoEditor.baseX = photoEditor.offsetX;
-  photoEditor.baseY = photoEditor.offsetY;
-  photoCanvasWrap.classList.add("is-dragging");
-  photoCanvasWrap.setPointerCapture(event.pointerId);
-};
-photoCanvasWrap.onpointermove = (event) => {
-  if (!photoEditor.dragging) return;
-  const rect = photoCanvasWrap.getBoundingClientRect();
-  photoEditor.offsetX = photoEditor.baseX + (event.clientX - photoEditor.startX) * 420 / rect.width;
-  photoEditor.offsetY = photoEditor.baseY + (event.clientY - photoEditor.startY) * 420 / rect.height;
-  drawPhotoEditor();
-};
-function endPhotoDrag(event) {
-  if (!photoEditor.dragging) return;
-  photoEditor.dragging = false;
-  photoCanvasWrap.classList.remove("is-dragging");
-  try { photoCanvasWrap.releasePointerCapture(event.pointerId); } catch {}
-}
-photoCanvasWrap.onpointerup = endPhotoDrag;
-photoCanvasWrap.onpointercancel = endPhotoDrag;
 
 function setImportStatus(type, label, percent = "") {
   const status = $("#status");
@@ -380,6 +284,24 @@ async function loadFxThread(url) {
   if (!statuses.length) throw new Error("thread unavailable");
   return { statuses, status: data.status || statuses[0], author: data.author || data.status?.author || statuses[0]?.author };
 }
+
+async function imageToLocalData(url) {
+  if (!url || url.startsWith("data:")) return url;
+  try {
+    const response = await fetch(url, { mode: "cors", cache: "force-cache" });
+    if (!response.ok) return url;
+    const blob = await response.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return url;
+  }
+}
+
 async function importLinkedTweet(url, insertAfter = null) {
   if (!isTweetUrl(url)) throw new Error("invalid url");
   const inserting = Number.isInteger(insertAfter);
@@ -402,12 +324,15 @@ async function importLinkedTweet(url, insertAfter = null) {
     imported = [{ name: tweet.name, handle: "@" + tweet.username, date: tweet.date, text: tweet.text, media: [] }];
   }
   if (inserting && tweets.length && tweets[0].handle.toLowerCase() !== imported[0].handle.toLowerCase()) throw new Error("different author");
+  imported = await Promise.all(imported.map(async (tweet) => ({
+    ...tweet,
+    media: await Promise.all((tweet.media || []).map(imageToLocalData))
+  })));
   if (inserting) tweets.splice(insertAfter + 1, 0, imported[0]);
   else tweets.splice(0, tweets.length, ...imported);
   if (importedAuthor?.avatar_url) {
-    avatarData = importedAuthor.avatar_url;
+    avatarData = await imageToLocalData(importedAuthor.avatar_url);
     avatarImage = new Image();
-    avatarImage.crossOrigin = "anonymous";
     avatarImage.onload = draw;
     avatarImage.src = avatarData;
   }
@@ -459,9 +384,11 @@ function applyRecommendedColors() {
   const main = $("#mainColor").value;
   const palette = recommendedPalette(main);
   $("#bg").value = palette.background;
+  $("#gradientStart").value = palette.background;
   $("#bg2").value = mixColors(main, "#ffffff", .32);
   $("#card").value = palette.card;
   applySiteTheme(main, palette.background, palette.card);
+  updateGradientPreview();
   draw();
   scheduleSave();
 }
@@ -473,6 +400,9 @@ $("#resetColors").onclick = () => {
   $("#mainColor").value = "#9b8f7f";
   $("#bg").value = "#d2c7b8";
   $("#bg2").value = "#b8a895";
+  $("#gradientStart").value = "#d2c7b8";
+  $("#gradientAngle").value = "135";
+  $("#gradientAngleValue").textContent = "135°";
   $("#card").value = "#e8dfd3";
   $("#bgMode").value = "solid";
   backgroundData = "";
@@ -485,10 +415,24 @@ $("#resetColors").onclick = () => {
 };
 function updateBackgroundControls() {
   const mode = $("#bgMode").value;
-  $("#gradientColorField").hidden = mode !== "gradient";
+  $("#gradientPanel").hidden = mode !== "gradient";
   $("#backgroundImageField").hidden = mode !== "image";
   $("#clearBackground").hidden = mode !== "image" || !backgroundData;
+  updateGradientPreview();
 }
+function updateGradientPreview() {
+  $("#gradientPreview").style.background = `linear-gradient(${$("#gradientAngle").value}deg, ${$("#bg").value}, ${$("#bg2").value})`;
+}
+$("#gradientStart").oninput = () => {
+  $("#bg").value = $("#gradientStart").value;
+  $("#recommendColors").checked = false;
+  applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
+  updateGradientPreview(); draw(); scheduleSave();
+};
+$("#gradientAngle").oninput = () => {
+  $("#gradientAngleValue").textContent = $("#gradientAngle").value + "°";
+  updateGradientPreview(); draw(); scheduleSave();
+};
 $("#bgMode").onchange = () => { updateBackgroundControls(); draw(); scheduleSave(); };
 $("#backgroundFile").onchange = (event) => {
   const file = event.target.files[0];
@@ -510,10 +454,8 @@ $("#clearBackground").onclick = () => {
 };
 
 function exportHtml() {
-  const profile = $("#profile").checked;
-  const date = $("#date").checked;
-  const link = $("#link").checked;
-  const url = ($("#url").value || "https://x.com/").split("?")[0];
+  const profile = true;
+  const date = true;
   const font = $("#font").value;
   const textSize = $("#textSize").value;
   return `<section style="max-width:680px;margin:auto;font-family:'${font}',sans-serif;font-size:${textSize}px;color:#2e2c29">${tweets.map((tweet) => `
@@ -522,7 +464,6 @@ function exportHtml() {
       <div style="white-space:pre-wrap;line-height:1.8">${tweet.text}</div>
       ${tweet.media?.map((src) => `<img src="${src}" style="display:block;width:100%;height:auto;margin-top:10px;border-radius:8px" alt="트윗 첨부 이미지">`).join("") || ""}
     </article>`).join("")}
-    ${link ? `<p>원문: <a href="${url}">${url}</a></p>` : ""}
   </section>`;
 }
 $("#rich").onclick = () => navigator.clipboard.write([new ClipboardItem({
@@ -574,6 +515,35 @@ function drawCover(ctx, image, width, height) {
   ctx.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
 }
 
+function mediaGridLayout(images, width) {
+  const valid = images.filter(Boolean);
+  if (!valid.length) return { height: 0, rows: [] };
+  if (valid.length === 1) {
+    const height = Math.min(420, Math.max(120, width * valid[0].naturalHeight / valid[0].naturalWidth));
+    return { height: height + 12, rows: [{ y: 12, height, items: [{ image: valid[0], x: 0, width }] }] };
+  }
+  const gap = 6, tileWidth = (width - gap) / 2;
+  const rows = [];
+  let y = 12;
+  for (let index = 0; index < valid.length; index += 2) {
+    const pair = valid.slice(index, index + 2);
+    const height = Math.min(320, Math.max(120, ...pair.map((image) => tileWidth * image.naturalHeight / image.naturalWidth)));
+    rows.push({ y, height, items: pair.map((image, itemIndex) => ({ image, x: itemIndex * (tileWidth + gap), width: tileWidth })) });
+    y += height + gap;
+  }
+  return { height: y, rows };
+}
+
+function drawContainedImage(ctx, image, x, y, width, height, radius = 10) {
+  ctx.save();
+  ctx.fillStyle = mixColors($("#card").value, "#ffffff", .42);
+  ctx.beginPath(); ctx.roundRect(x, y, width, height, radius); ctx.fill(); ctx.clip();
+  const ratio = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+  const drawWidth = image.naturalWidth * ratio, drawHeight = image.naturalHeight * ratio;
+  ctx.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+  ctx.restore();
+}
+
 async function draw() {
   const canvas = $("#canvas");
   const ctx = canvas.getContext("2d");
@@ -584,26 +554,26 @@ async function draw() {
   const columnGap = 14;
   const fontSize = Number($("#textSize").value);
   const lineHeight = fontSize * 1.62;
-  const imageScale = Number($("#imageScale").value) / 100;
-  const pixelScale = 2 * imageScale;
+  const imageScale = 1;
+  const pixelScale = 2;
   const font = $("#font").value;
+  const canvasFont = FONT_STACKS[font] || `"${font}",sans-serif`;
   await ensureFontLoaded(font);
-  const showProfile = $("#profile").checked;
-  const showDate = $("#date").checked;
-  const showLink = $("#link").checked;
+  const showProfile = true;
+  const showDate = true;
+  const showLink = false;
   const url = ($("#url").value || "https://x.com/backup_note/status/example").split("?")[0];
   const avatarColumn = showProfile ? avatarSize + columnGap : 0;
   const contentX = cardX + cardPadding + avatarColumn;
   const contentWidth = width - (cardX + cardPadding) * 2 - avatarColumn;
-  ctx.font = `${fontSize}px "${font}"`;
+  ctx.font = `${fontSize}px ${canvasFont}`;
   const wrapped = tweets.map((tweet) => wrapText(ctx, tweet.text, contentWidth));
   const mediaImages = await Promise.all(tweets.map((tweet) => Promise.all((tweet.media || []).map(loadMediaImage))));
   const layouts = wrapped.map((lines, index) => {
     const headerHeight = showProfile ? 48 : 6;
     const textHeight = Math.max(lineHeight, lines.length * lineHeight);
-    let mediaHeight = 0;
-    mediaImages[index].forEach((image) => { if (image) mediaHeight += contentWidth * image.naturalHeight / image.naturalWidth + 12; });
-    return { headerHeight, textHeight, mediaHeight, height: headerHeight + textHeight + mediaHeight + 28 };
+    const mediaLayout = mediaGridLayout(mediaImages[index], contentWidth);
+    return { headerHeight, textHeight, mediaHeight: mediaLayout.height, mediaLayout, height: headerHeight + textHeight + mediaLayout.height + 28 };
   });
   const cardTop = 28;
   const cardBottom = 28;
@@ -615,7 +585,10 @@ async function draw() {
   canvas.style.width = `min(100%, ${Math.round(width * imageScale)}px)`;
   ctx.scale(pixelScale, pixelScale);
   if ($("#bgMode").value === "gradient") {
-    const gradient = ctx.createLinearGradient(0, 0, width, logicalHeight);
+    const radians = (Number($("#gradientAngle").value) - 90) * Math.PI / 180;
+    const centerX = width / 2, centerY = logicalHeight / 2;
+    const radius = Math.abs(width * Math.cos(radians)) / 2 + Math.abs(logicalHeight * Math.sin(radians)) / 2;
+    const gradient = ctx.createLinearGradient(centerX - Math.cos(radians) * radius, centerY - Math.sin(radians) * radius, centerX + Math.cos(radians) * radius, centerY + Math.sin(radians) * radius);
     gradient.addColorStop(0, $("#bg").value);
     gradient.addColorStop(1, $("#bg2").value);
     ctx.fillStyle = gradient;
@@ -655,16 +628,16 @@ async function draw() {
         ctx.arc(cardX + cardPadding + avatarSize / 2, y + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = luminance($("#mainColor").value) < .45 ? "#ffffff" : "#2e2c29";
-        ctx.font = `700 12px "${font}"`;
+        ctx.font = `700 12px ${canvasFont}`;
         ctx.textAlign = "center";
         ctx.fillText("BU", cardX + cardPadding + avatarSize / 2, y + 27);
         ctx.textAlign = "left";
       }
       ctx.fillStyle = "#2e2c29";
-      ctx.font = `700 ${Math.max(13, fontSize - 1)}px "${font}"`;
+      ctx.font = `700 ${Math.max(13, fontSize - 1)}px ${canvasFont}`;
       ctx.fillText(tweet.name, contentX, y + 16);
       ctx.fillStyle = "#918d86";
-      ctx.font = `${Math.max(10, fontSize - 3)}px "${font}"`;
+      ctx.font = `${Math.max(10, fontSize - 3)}px ${canvasFont}`;
       const meta = tweet.handle + (showDate ? "  ·  " + tweet.date : "");
       ctx.fillText(meta, contentX, y + 36);
       y += layout.headerHeight;
@@ -672,23 +645,15 @@ async function draw() {
       y += layout.headerHeight;
     }
     ctx.fillStyle = "#2e2c29";
-    ctx.font = `${fontSize}px "${font}"`;
+    ctx.font = `${fontSize}px ${canvasFont}`;
     wrapped[index].forEach((line) => {
       y += lineHeight;
       if (line) ctx.fillText(line, contentX, y);
     });
-    for (const image of mediaImages[index]) {
-      if (!image) continue;
-      const imageHeight = contentWidth * image.naturalHeight / image.naturalWidth;
-      y += 12;
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(contentX, y, contentWidth, imageHeight, 12);
-      ctx.clip();
-      ctx.drawImage(image, contentX, y, contentWidth, imageHeight);
-      ctx.restore();
-      y += imageHeight;
-    }
+    const mediaTop = y;
+    layout.mediaLayout.rows.forEach((row) => row.items.forEach((item) => {
+      drawContainedImage(ctx, item.image, contentX + item.x, mediaTop + row.y, item.width, row.height);
+    }));
     y = tweetTop + layout.height;
     if (index < tweets.length - 1) {
       ctx.strokeStyle = mixColors($("#card").value, "#6f675f", .14);
@@ -706,7 +671,7 @@ async function draw() {
     ctx.roundRect(cardX + cardPadding, pillY, width - (cardX + cardPadding) * 2, 36, 18);
     ctx.fill();
     ctx.fillStyle = "#716b64";
-    ctx.font = `${Math.max(10, fontSize - 4)}px "${font}"`;
+    ctx.font = `${Math.max(10, fontSize - 4)}px ${canvasFont}`;
     const maxLink = url.length > 72 ? url.slice(0, 69) + "…" : url;
     ctx.fillText("원문  " + maxLink, cardX + cardPadding + 16, pillY + 22);
   }
@@ -730,15 +695,16 @@ $("#png").onclick = async () => {
   anchor.href = $("#canvas").toDataURL();
   anchor.click();
 };
-["mainColor", "bg", "bg2", "card", "imageScale", "textSize", "profile", "date", "link", "font"].forEach((id) => {
+["mainColor", "bg", "bg2", "card", "textSize", "font"].forEach((id) => {
   $("#" + id).oninput = () => {
     if (id === "mainColor" && $("#recommendColors").checked) { applyRecommendedColors(); return; }
     if ((id === "bg" || id === "bg2" || id === "card") && $("#recommendColors").checked) $("#recommendColors").checked = false;
+    if (id === "bg") $("#gradientStart").value = $("#bg").value;
+    if (id === "bg" || id === "bg2") updateGradientPreview();
     if (id === "font" || id === "textSize") {
       applyTypography();
       view.querySelectorAll("textarea").forEach(resizeTweetArea);
     }
-    if (id === "imageScale") $("#imageScaleValue").textContent = $("#imageScale").value + "%";
     if (id === "textSize") $("#textSizeValue").textContent = $("#textSize").value + "px";
     draw();
     scheduleSave();
