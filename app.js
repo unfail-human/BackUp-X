@@ -520,11 +520,11 @@ function mediaGridLayout(images, width) {
   if (!valid.length) return { height: 0, rows: [] };
   if (valid.length === 1) {
     const height = Math.min(420, Math.max(120, width * valid[0].naturalHeight / valid[0].naturalWidth));
-    return { height: height + 12, rows: [{ y: 12, height, items: [{ image: valid[0], x: 0, width }] }] };
+    return { height: height + 22, rows: [{ y: 22, height, items: [{ image: valid[0], x: 0, width }] }] };
   }
   const gap = 6, tileWidth = (width - gap) / 2;
   const rows = [];
-  let y = 12;
+  let y = 22;
   for (let index = 0; index < valid.length; index += 2) {
     const pair = valid.slice(index, index + 2);
     const height = Math.min(320, Math.max(120, ...pair.map((image) => tileWidth * image.naturalHeight / image.naturalWidth)));
