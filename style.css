@@ -132,3 +132,10 @@ header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacin
 
 /* 2026-08-19 · 이미지 전용 그라데이션 섹션 */
 .image-card-title{margin:0 0 4px}.image-card-help{margin:0 0 10px;color:var(--muted);font-size:9px;line-height:1.5}
+
+/* 2026-08-19 · 내보내기 버튼 고정 위치 */
+.editor nav .save-png{margin-left:auto;background:var(--theme);border-color:var(--theme);color:var(--theme-text);box-shadow:0 5px 13px color-mix(in srgb,var(--theme) 18%,transparent)}
+.editor nav .save-png:hover{background:color-mix(in srgb,var(--theme) 88%,#292520);border-color:color-mix(in srgb,var(--theme) 88%,#292520);color:#fff;transform:translateY(-1px)}
+.editor nav .save-png:active{transform:translateY(0);box-shadow:none}
+.editor nav .save-png:disabled{cursor:wait;opacity:.72}
+@media(max-width:760px){.editor nav .save-png,.editor nav .copy-rich{margin-left:auto}}
