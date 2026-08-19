@@ -711,15 +711,38 @@ document.querySelectorAll("nav button[data-tab]").forEach((button) => button.onc
   $("#imageView").hidden = !imageMode;
   $("#rich").hidden = imageMode;
   $("#png").hidden = !imageMode;
-  document.querySelector(".editor footer").hidden = !imageMode;
   if (imageMode) draw();
 });
 $("#png").onclick = async () => {
-  await draw();
-  const anchor = document.createElement("a");
-  anchor.download = "backup-x-thread.png";
-  anchor.href = $("#canvas").toDataURL();
-  anchor.click();
+  const button = $("#png");
+  const originalLabel = button.textContent;
+  button.disabled = true;
+  button.textContent = "PNG 만드는 중…";
+  try {
+    await document.fonts.ready;
+    await draw();
+    const canvas = $("#canvas");
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((result) => result ? resolve(result) : reject(new Error("PNG 변환에 실패했습니다.")), "image/png");
+    });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.download = "backup-x-thread.png";
+    anchor.href = objectUrl;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    button.textContent = "PNG 저장 완료";
+  } catch (error) {
+    console.error(error);
+    button.textContent = "PNG 저장 실패";
+  } finally {
+    setTimeout(() => {
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }, 1200);
+  }
 };
 ["mainColor", "bg", "bg2", "card", "textSize", "font"].forEach((id) => {
   $("#" + id).oninput = () => {
