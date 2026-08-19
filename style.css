@@ -7,7 +7,7 @@
 @font-face{font-family:"KoPub Batang Light";src:url("./webfonts/KoPubWorld Batang Light.ttf?v=25") format("truetype");font-weight:300;font-display:block}
 @font-face{font-family:"KoPub Batang Medium";src:url("./webfonts/KoPubWorld Batang Medium.ttf?v=25") format("truetype");font-weight:500;font-display:block}
 @font-face{font-family:"KoPub Batang Bold";src:url("./webfonts/KoPubWorld Batang Bold.ttf?v=25") format("truetype");font-weight:700;font-display:block}
-:root{--line:#e0d8ce;--line-strong:#cfc3b6;--text:#2e2c29;--muted:#81796f;--panel:#e8dfd3;--work:#d2c7b8;--white:#fff;--soft:#eee7de;--hover:#e4dbd0;--theme:#9b8f7f;--theme-soft:#cfc2b3;--theme-text:#2e2c29;--active-font:"온글잎 박다현체",sans-serif;--tweet-font-size:13px;--shadow:0 16px 52px rgba(40,35,30,.12)}
+:root{--line:#e4ddd4;--line-strong:#d4cabe;--text:#2e2c29;--muted:#81796f;--panel:#eee8df;--work:#f6f2eb;--white:#fff;--soft:#f4efe8;--hover:#e9e1d7;--theme:#9b8f7f;--theme-soft:#d8cec2;--theme-text:#2e2c29;--active-font:"온글잎 박다현체",sans-serif;--tweet-font-size:13px;--shadow:0 16px 52px rgba(40,35,30,.09)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;min-height:100%}
