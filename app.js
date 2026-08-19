@@ -4,7 +4,7 @@ const tweets = [
 ];
 const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
-const NOTICE_VERSION = "2.0";
+const NOTICE_VERSION = "2.1";
 let avatarData = "";
 let avatarImage = null;
 let backgroundData = "";
@@ -23,7 +23,7 @@ function workspaceState() {
   return {
     tweets, avatarData, backgroundData, url: $("#url").value, mainColor: $("#mainColor").value,
     bg: $("#bg").value, bg2: $("#bg2").value, bgMode: $("#bgMode").value,
-    card: $("#card").value, imageScale: $("#imageScale").value,
+    card: $("#card").value, imageScale: $("#imageScale").value, textSize: $("#textSize").value,
     font: $("#font").value, profile: $("#profile").checked,
     date: $("#date").checked, link: $("#link").checked,
     recommendColors: $("#recommendColors").checked
@@ -63,11 +63,13 @@ async function loadWorkspace() {
     tweets.splice(0, tweets.length, ...(saved.tweets || tweets));
     avatarData = saved.avatarData || "";
     backgroundData = saved.backgroundData || "";
-    for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "card", "imageScale", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
+    for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "card", "imageScale", "textSize", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
     updateLoadButton();
     for (const id of ["profile", "date", "link", "recommendColors"]) if (saved[id] != null) $("#" + id).checked = saved[id];
     applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
     $("#imageScaleValue").textContent = $("#imageScale").value + "%";
+    $("#textSizeValue").textContent = $("#textSize").value + "px";
+    applyTypography();
     updateBackgroundControls();
     if (avatarData) { avatarImage = new Image(); avatarImage.src = avatarData; }
     if (backgroundData) { backgroundImage = new Image(); backgroundImage.onload = draw; backgroundImage.src = backgroundData; }
@@ -77,6 +79,15 @@ async function loadWorkspace() {
   } catch { $("#saveState").lastChild.textContent = " 자동 저장 준비"; }
 }
 
+function applyTypography() {
+  const font = $("#font").value;
+  document.documentElement.style.setProperty("--active-font", `"${font}", sans-serif`);
+  document.documentElement.style.setProperty("--tweet-font-size", $("#textSize").value + "px");
+}
+function resizeTweetArea(area) {
+  area.style.height = "auto";
+  area.style.height = Math.max(44, area.scrollHeight) + "px";
+}
 function render() {
   view.innerHTML = tweets.map((tweet, index) => `
     <article class="tweet">
@@ -91,7 +102,8 @@ function render() {
       </div>
     </article>`).join("");
   view.querySelectorAll("textarea").forEach((area) => {
-    area.oninput = (event) => { tweets[Number(event.target.dataset.i)].text = event.target.value; scheduleSave(); };
+    resizeTweetArea(area);
+    area.oninput = (event) => { tweets[Number(event.target.dataset.i)].text = event.target.value; resizeTweetArea(event.target); draw(); scheduleSave(); };
   });
   view.querySelectorAll("[data-media-i]").forEach((input) => {
     input.onchange = async (event) => {
@@ -132,7 +144,7 @@ function render() {
       catch (error) { setImportStatus("error", error.message === "different author" ? "첫 트윗과 같은 계정의 링크만 추가할 수 있어요" : error.message === "invalid url" ? "올바른 누락 트윗 링크를 입력해 주세요" : "트윗을 불러오지 못했습니다"); }
     };
   });
-  view.style.fontFamily = $("#font").value;
+  applyTypography();
 }
 render();
 window.applyImportedThread = (items) => {
@@ -488,7 +500,8 @@ function exportHtml() {
   const link = $("#link").checked;
   const url = ($("#url").value || "https://x.com/").split("?")[0];
   const font = $("#font").value;
-  return `<section style="max-width:680px;margin:auto;font-family:'${font}',sans-serif;color:#2e2c29">${tweets.map((tweet) => `
+  const textSize = $("#textSize").value;
+  return `<section style="max-width:680px;margin:auto;font-family:'${font}',sans-serif;font-size:${textSize}px;color:#2e2c29">${tweets.map((tweet) => `
     <article style="padding:24px 0;border-bottom:1px solid #ddd">
       ${profile ? `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">${avatarData ? `<img src="${avatarData}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">` : ""}<div><b>${tweet.name}</b> <span style="color:#777">${tweet.handle}${date ? " · " + tweet.date : ""}</span></div></div>` : ""}
       <div style="white-space:pre-wrap;line-height:1.8">${tweet.text}</div>
@@ -550,8 +563,12 @@ async function draw() {
   const canvas = $("#canvas");
   const ctx = canvas.getContext("2d");
   const width = 720;
-  const padding = 48;
-  const fontSize = 14;
+  const cardX = 28;
+  const cardPadding = 30;
+  const avatarSize = 44;
+  const columnGap = 14;
+  const fontSize = Number($("#textSize").value);
+  const lineHeight = fontSize * 1.62;
   const imageScale = Number($("#imageScale").value) / 100;
   const pixelScale = 2 * imageScale;
   const font = $("#font").value;
@@ -559,17 +576,24 @@ async function draw() {
   const showDate = $("#date").checked;
   const showLink = $("#link").checked;
   const url = ($("#url").value || "https://x.com/backup_note/status/example").split("?")[0];
+  const avatarColumn = showProfile ? avatarSize + columnGap : 0;
+  const contentX = cardX + cardPadding + avatarColumn;
+  const contentWidth = width - (cardX + cardPadding) * 2 - avatarColumn;
   ctx.font = `${fontSize}px "${font}"`;
-  const wrapped = tweets.map((tweet) => wrapText(ctx, tweet.text, width - padding * 2 - 58));
+  const wrapped = tweets.map((tweet) => wrapText(ctx, tweet.text, contentWidth));
   const mediaImages = await Promise.all(tweets.map((tweet) => Promise.all((tweet.media || []).map(loadMediaImage))));
-  const mediaWidth = width - padding * 2 - (showProfile ? 58 : 0);
-  let height = 42;
-  wrapped.forEach((lines, index) => {
-    height += (showProfile ? 58 : 0) + lines.length * fontSize * 1.7 + 42;
-    mediaImages[index].forEach((image) => { if (image) height += mediaWidth * image.naturalHeight / image.naturalWidth + 10; });
+  const layouts = wrapped.map((lines, index) => {
+    const headerHeight = showProfile ? 48 : 6;
+    const textHeight = Math.max(lineHeight, lines.length * lineHeight);
+    let mediaHeight = 0;
+    mediaImages[index].forEach((image) => { if (image) mediaHeight += contentWidth * image.naturalHeight / image.naturalWidth + 12; });
+    return { headerHeight, textHeight, mediaHeight, height: headerHeight + textHeight + mediaHeight + 28 };
   });
-  if (showLink) height += 54;
-  const logicalHeight = Math.max(520, height);
+  const cardTop = 28;
+  const cardBottom = 28;
+  const linkHeight = showLink ? 56 : 0;
+  const cardHeight = cardPadding + layouts.reduce((sum, layout) => sum + layout.height, 0) + linkHeight + cardPadding;
+  const logicalHeight = Math.max(420, cardTop + cardHeight + cardBottom);
   canvas.width = Math.round(width * pixelScale);
   canvas.height = Math.round(logicalHeight * pixelScale);
   canvas.style.width = `min(100%, ${Math.round(width * imageScale)}px)`;
@@ -586,61 +610,89 @@ async function draw() {
     ctx.fillStyle = $("#bg").value;
     ctx.fillRect(0, 0, width, logicalHeight);
   }
+  ctx.save();
+  ctx.shadowColor = "rgba(43,37,31,.14)";
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 8;
   ctx.fillStyle = $("#card").value;
   ctx.beginPath();
-  ctx.roundRect(20, 20, width - 40, logicalHeight - 40, 12);
+  ctx.roundRect(cardX, cardTop, width - cardX * 2, cardHeight, 20);
   ctx.fill();
-  let y = 48;
+  ctx.restore();
+  let y = cardTop + cardPadding;
   tweets.forEach((tweet, index) => {
+    const layout = layouts[index];
+    const tweetTop = y;
     if (showProfile) {
-      if (avatarImage && avatarImage.complete) circleImage(ctx, avatarImage, padding, y, 44);
+      if (index < tweets.length - 1) {
+        ctx.strokeStyle = mixColors($("#mainColor").value, $("#card").value, .68);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cardX + cardPadding + avatarSize / 2, y + avatarSize + 5);
+        ctx.lineTo(cardX + cardPadding + avatarSize / 2, y + layout.height + 8);
+        ctx.stroke();
+      }
+      if (avatarImage && avatarImage.complete && avatarImage.naturalWidth) circleImage(ctx, avatarImage, cardX + cardPadding, y, avatarSize);
       else {
         ctx.fillStyle = $("#mainColor").value;
         ctx.beginPath();
-        ctx.arc(padding + 22, y + 22, 22, 0, Math.PI * 2);
+        ctx.arc(cardX + cardPadding + avatarSize / 2, y + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = luminance($("#mainColor").value) < .45 ? "#ffffff" : "#2e2c29";
         ctx.font = `700 12px "${font}"`;
         ctx.textAlign = "center";
-        ctx.fillText("BU", padding + 22, y + 27);
+        ctx.fillText("BU", cardX + cardPadding + avatarSize / 2, y + 27);
         ctx.textAlign = "left";
       }
       ctx.fillStyle = "#2e2c29";
-      ctx.font = `700 14px "${font}"`;
-      ctx.fillText(tweet.name, padding + 58, y + 17);
+      ctx.font = `700 ${Math.max(13, fontSize - 1)}px "${font}"`;
+      ctx.fillText(tweet.name, contentX, y + 16);
       ctx.fillStyle = "#918d86";
-      ctx.font = `12px "${font}"`;
+      ctx.font = `${Math.max(10, fontSize - 3)}px "${font}"`;
       const meta = tweet.handle + (showDate ? "  ·  " + tweet.date : "");
-      ctx.fillText(meta, padding + 58, y + 37);
-      y += 58;
+      ctx.fillText(meta, contentX, y + 36);
+      y += layout.headerHeight;
+    } else {
+      y += layout.headerHeight;
     }
     ctx.fillStyle = "#2e2c29";
     ctx.font = `${fontSize}px "${font}"`;
     wrapped[index].forEach((line) => {
-      y += fontSize * 1.7;
-      if (line) ctx.fillText(line, padding + (showProfile ? 58 : 0), y);
+      y += lineHeight;
+      if (line) ctx.fillText(line, contentX, y);
     });
     for (const image of mediaImages[index]) {
       if (!image) continue;
-      const imageHeight = mediaWidth * image.naturalHeight / image.naturalWidth;
-      y += 10;
-      ctx.drawImage(image, padding + (showProfile ? 58 : 0), y, mediaWidth, imageHeight);
+      const imageHeight = contentWidth * image.naturalHeight / image.naturalWidth;
+      y += 12;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(contentX, y, contentWidth, imageHeight, 12);
+      ctx.clip();
+      ctx.drawImage(image, contentX, y, contentWidth, imageHeight);
+      ctx.restore();
       y += imageHeight;
     }
-    y += 28;
+    y = tweetTop + layout.height;
     if (index < tweets.length - 1) {
-      ctx.strokeStyle = "#e6e2db";
+      ctx.strokeStyle = mixColors($("#card").value, "#6f675f", .14);
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(padding, y);
-      ctx.lineTo(width - padding, y);
+      ctx.moveTo(contentX, y - 4);
+      ctx.lineTo(width - cardX - cardPadding, y - 4);
       ctx.stroke();
-      y += 26;
     }
   });
   if (showLink) {
-    ctx.fillStyle = "#918d86";
-    ctx.font = `11px "${font}"`;
-    ctx.fillText("원문  " + url, padding, y + 12);
+    const pillY = y + 8;
+    ctx.fillStyle = mixColors($("#mainColor").value, $("#card").value, .78);
+    ctx.beginPath();
+    ctx.roundRect(cardX + cardPadding, pillY, width - (cardX + cardPadding) * 2, 36, 18);
+    ctx.fill();
+    ctx.fillStyle = "#716b64";
+    ctx.font = `${Math.max(10, fontSize - 4)}px "${font}"`;
+    const maxLink = url.length > 72 ? url.slice(0, 69) + "…" : url;
+    ctx.fillText("원문  " + maxLink, cardX + cardPadding + 16, pillY + 22);
   }
 }
 
@@ -662,12 +714,16 @@ $("#png").onclick = async () => {
   anchor.href = $("#canvas").toDataURL();
   anchor.click();
 };
-["mainColor", "bg", "bg2", "card", "imageScale", "profile", "date", "link", "font"].forEach((id) => {
+["mainColor", "bg", "bg2", "card", "imageScale", "textSize", "profile", "date", "link", "font"].forEach((id) => {
   $("#" + id).oninput = () => {
     if (id === "mainColor" && $("#recommendColors").checked) { applyRecommendedColors(); return; }
     if ((id === "bg" || id === "bg2" || id === "card") && $("#recommendColors").checked) $("#recommendColors").checked = false;
-    if (id === "font") view.style.fontFamily = $("#" + id).value;
+    if (id === "font" || id === "textSize") {
+      applyTypography();
+      view.querySelectorAll("textarea").forEach(resizeTweetArea);
+    }
     if (id === "imageScale") $("#imageScaleValue").textContent = $("#imageScale").value + "%";
+    if (id === "textSize") $("#textSizeValue").textContent = $("#textSize").value + "px";
     draw();
     scheduleSave();
   };
