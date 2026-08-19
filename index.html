@@ -16,7 +16,7 @@
 <meta name="twitter:image" content="https://unfail-human.github.io/BackUp-X/og-image.png">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="apple-touch-icon" href="./favicon.png">
-<link rel="stylesheet" href="style.css?v=23">
+<link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
 <header>
@@ -46,13 +46,19 @@
 <p class="archive-help">공개 트윗만 가져올 수 있어요. 누락된 트윗은 게시글 오른쪽의 + 버튼으로 추가하세요.</p>
 <hr>
 <h3>02 · 이미지 편집</h3>
-<label>프로필 사진<input id="avatarFile" type="file" accept="image/*">
-</label>
 <label>폰트<select id="font">
 <option value="Pretendard">Pretendard</option>
 <option value="Noto Sans KR">Noto Sans KR</option>
-<option value="KoPub Dotum">KoPubWorld 돋움</option>
-<option value="KoPub Batang">KoPubWorld 바탕</option>
+<optgroup label="KoPubWorld 돋움">
+<option value="KoPub Dotum Light">KoPubWorld 돋움 Light</option>
+<option value="KoPub Dotum Medium">KoPubWorld 돋움 Medium</option>
+<option value="KoPub Dotum Bold">KoPubWorld 돋움 Bold</option>
+</optgroup>
+<optgroup label="KoPubWorld 바탕">
+<option value="KoPub Batang Light">KoPubWorld 바탕 Light</option>
+<option value="KoPub Batang Medium">KoPubWorld 바탕 Medium</option>
+<option value="KoPub Batang Bold">KoPubWorld 바탕 Bold</option>
+</optgroup>
 <optgroup label="기본 폰트">
 <option value="system-ui">시스템 기본</option>
 <option value="Apple SD Gothic Neo">Apple SD Gothic Neo</option>
@@ -78,18 +84,17 @@
 <button id="resetColors" class="reset-colors" type="button">색상 초기화</button>
 <label>배경 방식<select id="bgMode"><option value="solid">단색</option><option value="gradient">그라데이션</option><option value="image">이미지</option></select>
 </label>
-<label id="gradientColorField" hidden>그라데이션 끝 색상<input id="bg2" type="color" value="#b8a895">
-</label>
+<section id="gradientPanel" class="gradient-panel" hidden>
+<div class="gradient-preview" id="gradientPreview"></div>
+<div class="gradient-colors">
+<label>시작 색상<input id="gradientStart" type="color" value="#d2c7b8"></label>
+<label>끝 색상<input id="bg2" type="color" value="#b8a895"></label>
+</div>
+<label class="gradient-angle"><span>그라데이션 방향 <b id="gradientAngleValue">135°</b></span><input id="gradientAngle" type="range" min="0" max="360" value="135"></label>
+</section>
 <label id="backgroundImageField" hidden>배경 이미지<input id="backgroundFile" type="file" accept="image/*">
 </label>
 <button id="clearBackground" class="reset-colors" type="button" hidden>배경 이미지 삭제</button>
-<label>이미지 전체 크기 <span id="imageScaleValue">100%</span><input id="imageScale" type="range" min="60" max="140" value="100">
-</label>
-<label>
-<input id="profile" type="checkbox" checked> 프로필 정보 표시</label>
-<label>
-<input id="date" type="checkbox" checked> 날짜와 시간 표시</label>
-<label><input id="link" type="checkbox" checked> 이미지 최하단에 원문 트윗 링크 표시</label>
 </aside>
 <section class="editor">
 <nav>
@@ -134,7 +139,7 @@
 <li>작업 내용 자동 저장 및 업데이트 후 자동 복원</li>
 <li>타래 불러오기 진행률과 완료 상태 표시</li>
 <li>닉네임·아이디·프로필·작성 시각 함께 반영</li>
-<li>프로필 사진을 확대하고 위치를 조절하는 편집 팝업</li>
+<li>트윗의 프로필 사진을 원본 그대로 자동 반영</li>
 <li>메인 테마색 기반 자동 색상 추천</li>
 <li>트윗 사진을 원본 비율 그대로 모두 표시</li>
 <li>티스토리 서식과 PNG에 첨부 사진 포함</li>
@@ -145,44 +150,7 @@
 <button id="noticeClose" type="button">확인</button>
 </section>
 </div>
-<div class="photo-editor-backdrop" id="photoEditorBackdrop" hidden>
-<section class="photo-editor-modal" role="dialog" aria-modal="true" aria-labelledby="photoEditorTitle">
-<div class="photo-editor-head">
-<div>
-<small>MEDIA EDIT</small>
-<h2 id="photoEditorTitle">프로필 사진 편집</h2>
-<p>원 안에 보일 위치를 드래그하고 확대 비율을 조절하세요.</p>
-</div>
-<button id="photoEditorClose" class="photo-editor-close" type="button" aria-label="닫기">×</button>
-</div>
-<div class="photo-editor-work">
-<div class="photo-editor-canvas-wrap">
-<canvas id="photoEditorCanvas" width="420" height="420">
-</canvas>
-<div class="photo-editor-circle-guide">
-</div>
-</div>
-<div class="photo-editor-controls">
-<label>
-<span>확대</span>
-<input id="photoEditorZoom" type="range" min="1" max="4" step="0.01" value="1">
-<b id="photoEditorZoomValue">100%</b>
-</label>
-<button id="photoEditorReset" type="button">위치 초기화</button>
-</div>
-<div class="photo-editor-preview">
-<span>적용 결과</span>
-<canvas id="photoEditorPreview" width="112" height="112">
-</canvas>
-</div>
-</div>
-<div class="photo-editor-actions">
-<button id="photoEditorCancel" type="button">취소</button>
-<button id="photoEditorApply" type="button">적용</button>
-</div>
-</section>
-</div>
-<script src="app.js?v=23">
+<script src="app.js?v=24">
 </script>
 </body>
 </html>
