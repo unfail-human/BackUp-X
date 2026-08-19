@@ -1,9 +1,10 @@
 const tweets = [
-  { name: "백업하는 사람", handle: "@backup_note", date: "2026. 08. 19. 오후 5:42", text: "언젠가 사라질지도 모르는 기록을 위해, 오늘의 이야기를 남겨 둡니다.\n\n이 타래는 BackUp-X의 예시예요." },
-  { name: "백업하는 사람", handle: "@backup_note", date: "2026. 08. 19. 오후 5:44", text: "본문을 직접 수정한 뒤 티스토리용 서식이나 이미지로 저장할 수 있습니다." }
+  { name: "백업하는 사람", handle: "@backup_note", date: "2026. 08. 19. 오후 5:42", text: "언젠가 사라질지도 모르는 기록을 위해, 오늘의 이야기를 남겨 둡니다.\n\n이 타래는 BackUp-X의 예시예요.", media: [] },
+  { name: "백업하는 사람", handle: "@backup_note", date: "2026. 08. 19. 오후 5:44", text: "본문을 직접 수정한 뒤 티스토리용 서식이나 이미지로 저장할 수 있습니다.", media: [] }
 ];
 const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
+const NOTICE_VERSION = "1.4";
 let avatarData = "";
 let avatarImage = null;
 
@@ -14,6 +15,7 @@ function render() {
       <div>
         <div class="meta"><b>${tweet.name}</b>${tweet.handle} · ${tweet.date}</div>
         <textarea data-i="${index}">${tweet.text}</textarea>
+        ${tweet.media?.length ? `<div class="tweet-media">${tweet.media.map((src) => `<img src="${src}" alt="트윗 첨부 이미지" loading="lazy">`).join("")}</div>` : ""}
       </div>
     </article>`).join("");
   view.querySelectorAll("textarea").forEach((area) => {
@@ -22,6 +24,22 @@ function render() {
   view.style.fontFamily = $("#font").value;
 }
 render();
+window.applyImportedThread = (items) => {
+  tweets.splice(0, tweets.length, ...items.map((item) => ({
+    name: item.name,
+    handle: item.handle,
+    date: item.date,
+    text: item.text,
+    media: (item.media || []).map((media) => media.original_url || media.url).filter(Boolean)
+  })));
+  render();
+  draw();
+};
+if (localStorage.getItem("backupXNoticeVersion") !== NOTICE_VERSION) $("#noticeBackdrop").hidden = false;
+$("#noticeClose").onclick = () => {
+  if ($("#noticeDismiss").checked) localStorage.setItem("backupXNoticeVersion", NOTICE_VERSION);
+  $("#noticeBackdrop").hidden = true;
+};
 
 const photoEditor = { image: null, zoom: 1, offsetX: 0, offsetY: 0, dragging: false, startX: 0, startY: 0, baseX: 0, baseY: 0 };
 
@@ -168,10 +186,28 @@ function recommendedPalette(main) {
     card: mixColors(main, "#ffffff", .95)
   };
 }
+function applySiteTheme(main, background, card) {
+  const root = document.documentElement;
+  root.style.setProperty("--theme", main);
+  root.style.setProperty("--theme-soft", mixColors(main, "#ffffff", .72));
+  root.style.setProperty("--theme-text", luminance(main) < .38 ? "#ffffff" : "#2e2c29");
+  root.style.setProperty("--work", background);
+  root.style.setProperty("--panel", card);
+  document.body.style.background = background;
+}
 $("#recommendColors").onclick = () => {
-  const palette = recommendedPalette($("#mainColor").value);
+  const main = $("#mainColor").value;
+  const palette = recommendedPalette(main);
   $("#bg").value = palette.background;
   $("#card").value = palette.card;
+  applySiteTheme(main, palette.background, palette.card);
+  draw();
+};
+$("#resetColors").onclick = () => {
+  $("#mainColor").value = "#9b8f7f";
+  $("#bg").value = "#dedbd4";
+  $("#card").value = "#fbfaf8";
+  applySiteTheme("#9b8f7f", "#dedbd4", "#fbfaf8");
   draw();
 };
 
@@ -185,6 +221,7 @@ function exportHtml() {
     <article style="padding:24px 0;border-bottom:1px solid #ddd">
       ${profile ? `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">${avatarData ? `<img src="${avatarData}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">` : ""}<div><b>${tweet.name}</b> <span style="color:#777">${tweet.handle}${date ? " · " + tweet.date : ""}</span></div></div>` : ""}
       <div style="white-space:pre-wrap;line-height:1.8">${tweet.text}</div>
+      ${tweet.media?.map((src) => `<img src="${src}" style="display:block;width:100%;height:auto;margin-top:10px;border-radius:8px" alt="트윗 첨부 이미지">`).join("") || ""}
     </article>`).join("")}
     ${link ? `<p>원문: <a href="${url}">${url}</a></p>` : ""}
   </section>`;
@@ -223,7 +260,17 @@ function circleImage(ctx, image, x, y, size) {
   ctx.restore();
 }
 
-function draw() {
+function loadMediaImage(source) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    if (!source.startsWith("data:")) image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = source;
+  });
+}
+
+async function draw() {
   const canvas = $("#canvas");
   const ctx = canvas.getContext("2d");
   const width = 720;
@@ -236,8 +283,13 @@ function draw() {
   const url = $("#url").value || "https://x.com/backup_note/status/example";
   ctx.font = `${fontSize}px "${font}"`;
   const wrapped = tweets.map((tweet) => wrapText(ctx, tweet.text, width - padding * 2 - 58));
+  const mediaImages = await Promise.all(tweets.map((tweet) => Promise.all((tweet.media || []).map(loadMediaImage))));
+  const mediaWidth = width - padding * 2 - (showProfile ? 58 : 0);
   let height = 42;
-  wrapped.forEach((lines) => height += (showProfile ? 58 : 0) + lines.length * fontSize * 1.7 + 42);
+  wrapped.forEach((lines, index) => {
+    height += (showProfile ? 58 : 0) + lines.length * fontSize * 1.7 + 42;
+    mediaImages[index].forEach((image) => { if (image) height += mediaWidth * image.naturalHeight / image.naturalWidth + 10; });
+  });
   if (showLink) height += 54;
   canvas.width = width * 2;
   canvas.height = Math.max(520, height) * 2;
@@ -278,6 +330,13 @@ function draw() {
       y += fontSize * 1.7;
       if (line) ctx.fillText(line, padding + (showProfile ? 58 : 0), y);
     });
+    for (const image of mediaImages[index]) {
+      if (!image) continue;
+      const imageHeight = mediaWidth * image.naturalHeight / image.naturalWidth;
+      y += 10;
+      ctx.drawImage(image, padding + (showProfile ? 58 : 0), y, mediaWidth, imageHeight);
+      y += imageHeight;
+    }
     y += 28;
     if (index < tweets.length - 1) {
       ctx.strokeStyle = "#e6e2db";
@@ -306,8 +365,8 @@ document.querySelectorAll("nav button").forEach((button) => button.onclick = () 
   $("#png").hidden = !imageMode;
   if (imageMode) draw();
 });
-$("#png").onclick = () => {
-  draw();
+$("#png").onclick = async () => {
+  await draw();
   const anchor = document.createElement("a");
   anchor.download = "backup-x-thread.png";
   anchor.href = $("#canvas").toDataURL();
