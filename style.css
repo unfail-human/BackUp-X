@@ -61,62 +61,62 @@ canvas{display:block;width:min(100%,720px);height:auto;margin:auto;border:1px so
 
 
 /* 2026-08-19 · 전체 UI 가독성 확대 */
-body{font-size:22px}
-header{height:80px;padding:0 32px}
-header b{font-size:22px;gap:11px}
-header span{font-size:19px}
-.brand-sparkle{width:20px;height:20px;flex-basis:20px}
-main{padding:34px 28px 64px}
-.hero{max-width:1320px;padding:26px 2px 22px}
-.hero small{font-size:19px}
-.hero h1{font-size:36px;margin:10px 0 9px}
-.hero p{font-size:19px}
-.app{max-width:1320px;min-height:780px;grid-template-columns:440px minmax(0,1fr)}
-aside{padding:38px 34px 50px}
-h3{font-size:22px;margin-bottom:24px}
-label{font-size:22px;margin:20px 0}
-input:not([type=checkbox]):not([type=color]),select{min-height:60px;margin-top:11px;padding:14px 16px;font-size:22px}
-aside>button{min-height:60px;margin-top:15px;font-size:22px}
-.import-status{grid-template-columns:22px 1fr auto;min-height:52px;padding:13px 15px;font-size:19px}
-.import-status b{font-size:19px}
-.import-status.done i:before{font-size:22px}
-.import-status.error i:before{font-size:19px}
-hr{margin:36px 0}
-.auto-palette{padding:15px 0}
-.auto-palette span{gap:5px}
-.auto-palette b{font-size:22px}
-.auto-palette small{font-size:19px;line-height:1.45}
-.auto-palette input{width:23px!important;height:23px!important;flex-basis:23px}
-.reset-colors{min-height:52px!important}
-.archive-help{margin:12px 0 18px;font-size:19px;line-height:1.6}
-.archive-upload span{min-height:60px;font-size:22px}
-.theme-row>label:first-child input,.gradient-colors input{height:50px}
-.colors input{height:48px}
-.gradient-panel{gap:16px;padding:17px}
-.gradient-preview{height:70px}
-.gradient-angle b{font-size:19px}
-.editor nav{gap:10px;padding:21px 26px}
-nav button{min-height:54px;padding:13px 22px;font-size:22px}
-#textView{padding:30px 38px 44px}
-.tweet{grid-template-columns:52px minmax(0,1fr);gap:18px;padding:27px 22px 25px}
-.avatar{width:48px;height:48px;font-size:19px}
-.tweet-actions button{width:40px;height:40px;flex-basis:40px;font-size:22px}
-.thread-insert{gap:10px;padding:14px}
-.thread-insert input{min-height:54px!important}
-.thread-insert button{min-height:54px;padding:0 20px;font-size:22px}
-.editor footer{padding:21px 26px}
-.editor footer button{min-width:136px;min-height:54px;padding:13px 20px;font-size:22px}
-.photo-editor-head small{font-size:19px}
-.photo-editor-head h2{font-size:30px}
-.photo-editor-head p{font-size:19px}
-.photo-editor-controls label b{font-size:19px}
-.photo-editor-controls button,.photo-editor-actions button{padding:14px 18px;font-size:22px}
-.photo-editor-preview{font-size:19px}
-.notice-kicker{font-size:19px}
-.notice-modal h2{font-size:30px}
-.notice-content{font-size:22px}
-.notice-content b{font-size:19px}
-.notice-check{font-size:19px}
-.notice-modal>button{padding:15px;font-size:22px}
-.tweet-media-tools label,.tweet-media-tools button{padding:10px 14px;font-size:19px}
-@media(max-width:760px){header{height:70px;padding:0 18px}.app{grid-template-columns:1fr;margin:0 12px}.hero h1{font-size:32px}aside{padding:30px 24px 40px}#textView{padding:18px}.editor nav{flex-wrap:wrap}.editor nav .copy-rich{margin-left:0}}
+body{font-size:19px}
+header{height:74px;padding:0 30px}
+header b{font-size:19px;gap:10px}
+header span{font-size:16px}
+.brand-sparkle{width:18px;height:18px;flex-basis:18px}
+main{padding:31px 26px 60px}
+.hero{max-width:1280px;padding:24px 2px 20px}
+.hero small{font-size:16px}
+.hero h1{font-size:32px;margin:9px 0 8px}
+.hero p{font-size:16px}
+.app{max-width:1280px;min-height:750px;grid-template-columns:410px minmax(0,1fr)}
+aside{padding:35px 31px 46px}
+h3{font-size:19px;margin-bottom:21px}
+label{font-size:19px;margin:18px 0}
+input:not([type=checkbox]):not([type=color]),select{min-height:54px;margin-top:10px;padding:13px 15px;font-size:19px}
+aside>button{min-height:54px;margin-top:14px;font-size:19px}
+.import-status{grid-template-columns:20px 1fr auto;min-height:47px;padding:12px 14px;font-size:16px}
+.import-status b{font-size:16px}
+.import-status.done i:before{font-size:19px}
+.import-status.error i:before{font-size:16px}
+hr{margin:33px 0}
+.auto-palette{padding:14px 0}
+.auto-palette span{gap:4px}
+.auto-palette b{font-size:19px}
+.auto-palette small{font-size:16px;line-height:1.45}
+.auto-palette input{width:21px!important;height:21px!important;flex-basis:21px}
+.reset-colors{min-height:47px!important}
+.archive-help{margin:11px 0 16px;font-size:16px;line-height:1.6}
+.archive-upload span{min-height:54px;font-size:19px}
+.theme-row>label:first-child input,.gradient-colors input{height:46px}
+.colors input{height:44px}
+.gradient-panel{gap:15px;padding:16px}
+.gradient-preview{height:66px}
+.gradient-angle b{font-size:16px}
+.editor nav{gap:9px;padding:19px 24px}
+nav button{min-height:50px;padding:12px 20px;font-size:19px}
+#textView{padding:28px 36px 41px}
+.tweet{grid-template-columns:51px minmax(0,1fr);gap:17px;padding:26px 21px 24px}
+.avatar{width:47px;height:47px;font-size:16px}
+.tweet-actions button{width:37px;height:37px;flex-basis:37px;font-size:19px}
+.thread-insert{gap:9px;padding:13px}
+.thread-insert input{min-height:49px!important}
+.thread-insert button{min-height:49px;padding:0 18px;font-size:19px}
+.editor footer{padding:19px 24px}
+.editor footer button{min-width:124px;min-height:50px;padding:12px 18px;font-size:19px}
+.photo-editor-head small{font-size:16px}
+.photo-editor-head h2{font-size:27px}
+.photo-editor-head p{font-size:16px}
+.photo-editor-controls label b{font-size:16px}
+.photo-editor-controls button,.photo-editor-actions button{padding:13px 17px;font-size:19px}
+.photo-editor-preview{font-size:16px}
+.notice-kicker{font-size:16px}
+.notice-modal h2{font-size:27px}
+.notice-content{font-size:19px}
+.notice-content b{font-size:16px}
+.notice-check{font-size:16px}
+.notice-modal>button{padding:14px;font-size:19px}
+.tweet-media-tools label,.tweet-media-tools button{padding:9px 13px;font-size:16px}
+@media(max-width:760px){header{height:66px;padding:0 18px}.app{grid-template-columns:1fr;margin:0 12px}.hero h1{font-size:29px}aside{padding:28px 23px 37px}#textView{padding:17px}.editor nav{flex-wrap:wrap}.editor nav .copy-rich{margin-left:0}}
