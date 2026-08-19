@@ -439,7 +439,15 @@ function updateBackgroundControls() {
   updateGradientPreview();
 }
 function updateGradientPreview() {
-  $("#gradientPreview").style.background = `linear-gradient(${$("#gradientAngle").value}deg, ${$("#bg").value}, ${$("#bg2").value})`;
+  const angle = $("#gradientAngle").value + "deg";
+  const first = $("#bg").value;
+  const second = $("#bg2").value;
+  const root = document.documentElement;
+  $("#gradientPreview").style.background = `linear-gradient(${angle}, ${first}, ${second})`;
+  root.style.setProperty("--image-angle", angle);
+  root.style.setProperty("--image-bg-1", first);
+  root.style.setProperty("--image-bg-2", second);
+  root.style.setProperty("--image-card", $("#card").value);
 }
 $("#gradientStart").oninput = () => {
   $("#bg").value = $("#gradientStart").value;
@@ -458,15 +466,23 @@ function exportHtml() {
   const hintSize = Math.max(10, textSize - 2);
   const safe = (value) => String(value ?? "").replace(/[&<>\"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[char]));
   const main = $("#mainColor").value;
+  const card = $("#card").value;
+  const first = $("#bg").value;
+  const second = $("#bg2").value;
+  const angle = $("#gradientAngle").value;
   const line = mixColors(main, "#ffffff", .76);
   const soft = mixColors(main, "#ffffff", .91);
+  const avatarText = luminance(main) < .45 ? "#ffffff" : "#2e2c29";
   const original = safe(($("#url").value || "").split("?")[0]);
-  return `<div style="max-width:720px;margin:24px auto;padding:10px 22px 22px;border:1px solid ${line};border-radius:18px;background:#fff;font-family:'${safe(font)}','Noto Sans KR',sans-serif;font-size:${textSize}px;color:#2e2c29;box-sizing:border-box">${tweets.map((tweet, index) => `
-    <div style="padding:24px 0;${index < tweets.length - 1 ? `border-bottom:1px solid ${line}` : ""}">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">${avatarData ? `<img src="${avatarData}" width="44" height="44" style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover">` : `<span style="display:inline-block;width:44px;height:44px;border-radius:50%;background:${main}"></span>`}<div style="line-height:1.35"><strong style="display:block;font-size:1em">${safe(tweet.name)}</strong><span style="display:block;margin-top:3px;color:#918d86;font-size:${hintSize}px">${safe(tweet.handle)} &nbsp;·&nbsp; ${safe(tweet.date)}</span></div></div>
-      <div style="white-space:pre-wrap;word-break:break-word;line-height:1.75">${safe(tweet.text)}</div>
-      ${tweet.media?.map((src) => `<div style="margin-top:18px;padding:5px;border-radius:12px;background:${soft}"><img src="${safe(src)}" style="display:block;width:100%;height:auto;margin:0;border-radius:9px" alt="트윗 첨부 이미지"></div>`).join("") || ""}
-    </div>`).join("")}${original ? `<div style="margin-top:4px;padding:12px 15px;border-radius:999px;background:${soft};color:#746e66;font-size:${hintSize}px;overflow-wrap:anywhere"><a href="${original}" style="color:inherit;text-decoration:none">원문 트윗 보기 · ${original}</a></div>` : ""}</div>`;
+  const posts = tweets.map((tweet, index) => {
+    const media = tweet.media?.length ? `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:18px;padding:5px;border:1px solid ${line};border-radius:12px;background:${soft}">${tweet.media.map((src) => `<img src="${safe(src)}" style="display:block;width:100%;height:auto;min-height:120px;max-height:360px;object-fit:contain;border-radius:8px;background:${soft}" alt="트윗 첨부 이미지">`).join("")}</div>` : "";
+    return `<div style="padding:24px 0;${index < tweets.length - 1 ? `border-bottom:1px solid ${line}` : ""}">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">${avatarData ? `<img src="${avatarData}" width="44" height="44" style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover">` : `<span style="display:flex;width:44px;height:44px;flex:0 0 44px;align-items:center;justify-content:center;border-radius:50%;background:${main};color:${avatarText};font-size:12px;font-weight:700">BU</span>`}<div style="line-height:1.35"><strong style="display:block;font-size:${textSize}px">${safe(tweet.name)}</strong><span style="display:block;margin-top:3px;color:#918d86;font-size:${hintSize}px">${safe(tweet.handle)} &nbsp;·&nbsp; ${safe(tweet.date)}</span></div></div>
+      <div style="white-space:pre-wrap;word-break:break-word;line-height:1.65;font-size:${textSize}px">${safe(tweet.text)}</div>
+      ${media}
+    </div>`;
+  }).join("");
+  return `<div style="max-width:720px;margin:24px auto;padding:28px;background:linear-gradient(${angle}deg,${first},${second});font-family:'${safe(font)}','Noto Sans KR',sans-serif;color:#2e2c29;box-sizing:border-box"><div style="padding:8px 26px 24px;border:1px solid ${line};border-radius:20px;background:${card};box-shadow:0 10px 28px rgba(43,37,31,.12)">${posts}${original ? `<div style="margin-top:8px;padding:12px 15px;border-radius:999px;background:${soft};color:#746e66;font-size:${hintSize}px;overflow-wrap:anywhere"><a href="${original}" style="color:inherit;text-decoration:none">원문 트윗 보기 · ${original}</a></div>` : ""}</div></div>`;
 }
 $("#rich").onclick = async () => {
   const button = $("#rich");
@@ -613,7 +629,7 @@ async function draw() {
   ctx.shadowColor = "rgba(43,37,31,.14)";
   ctx.shadowBlur = 24;
   ctx.shadowOffsetY = 8;
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = $("#card").value;
   ctx.beginPath();
   ctx.roundRect(cardX, cardTop, width - cardX * 2, cardHeight, 20);
   ctx.fill();
@@ -710,7 +726,7 @@ $("#png").onclick = async () => {
     if (id === "mainColor" && $("#recommendColors").checked) { applyRecommendedColors(); return; }
     if ((id === "bg" || id === "bg2" || id === "card") && $("#recommendColors").checked) $("#recommendColors").checked = false;
     if (id === "bg") $("#gradientStart").value = $("#bg").value;
-    if (id === "bg" || id === "bg2") updateGradientPreview();
+    if (id === "bg" || id === "bg2" || id === "card") updateGradientPreview();
     if (id === "mainColor") applySiteTheme($("#mainColor").value);
     if (id === "font" || id === "textSize") {
       applyTypography();
