@@ -61,12 +61,12 @@ canvas{display:block;width:min(100%,720px);height:auto;margin:auto;border:1px so
 
 
 /* 2026-08-19 · 전체 UI 가독성 확대 */
-body{font-size:12px;overflow:auto}
-header{height:52px;padding:0 20px}
-header b{font-size:12px;gap:8px}
+body{font-size:12px;overflow:hidden}
+header{height:64px;padding:0 24px}
+header b{font-size:19px;gap:9px;letter-spacing:-.02em}
 header span{font-size:9px}
-.brand-sparkle{width:24px;height:24px;flex:0 0 24px;border-radius:7px;background:#edf3fc;clip-path:none;display:grid;place-items:center}.brand-sparkle:before{content:"✦";color:#5e7fb6;font-size:12px;line-height:1;font-style:normal}
-main{width:100%;min-width:0;padding:12px 16px 30px;overflow:auto}
+.brand-sparkle{width:30px;height:30px;flex:0 0 30px;border-radius:9px;background:#edf3fc;clip-path:none;display:grid;place-items:center}.brand-sparkle:before{content:"✦";color:#5e7fb6;font-size:14px;line-height:1;font-style:normal}
+main{width:100%;height:calc(100vh - 64px);min-width:0;padding:12px 16px 24px;overflow:auto;display:grid;grid-template-rows:auto auto;align-content:safe center;justify-items:safe center}
 .hero{width:min(1120px,100%);margin:0 auto;padding:8px 2px 10px}
 .hero small{font-size:9px}
 .hero h1{font-size:20px;margin:4px 0 3px;line-height:1.18}
@@ -97,8 +97,9 @@ hr{margin:18px 0}
 .gradient-angle b{font-size:9px}
 .editor nav{gap:6px;padding:10px 14px}
 nav button{min-height:35px;padding:8px 12px;font-size:12px}
-#textView{padding:17px 22px 24px}
-.tweet{grid-template-columns:46px minmax(0,1fr);gap:13px;padding:18px 15px 16px}
+#textView{padding:22px 28px 28px;background:linear-gradient(var(--image-angle,135deg),var(--image-bg-1,#f6f2eb),var(--image-bg-2,#ded4c7))}
+.tweet{grid-template-columns:46px minmax(0,1fr);gap:13px;padding:18px 15px 16px;background:var(--image-card,#eee8df)}
+.tweet:first-child{border-radius:18px 18px 0 0}.tweet:last-child{border-radius:0 0 18px 18px}.tweet:only-child{border-radius:18px}
 .avatar{width:42px;height:42px;font-size:12px}
 .tweet-actions button{width:30px;height:30px;flex-basis:30px;font-size:15px}
 .thread-insert{gap:6px;padding:8px}
@@ -119,5 +120,5 @@ nav button{min-height:35px;padding:8px 12px;font-size:12px}
 .notice-check{font-size:9px}
 .notice-modal>button{padding:9px;font-size:12px}
 .tweet-media-tools label,.tweet-media-tools button{padding:6px 9px;font-size:9px}
-@media(max-width:900px){main{overflow:auto}.app{width:860px;min-width:860px;margin:0 auto}.hero{width:860px;min-width:860px}}
-@media(max-width:760px){header{height:50px;padding:0 15px}.app{grid-template-columns:1fr;width:auto;min-width:0;margin:0 8px}.hero{width:auto;min-width:0;margin:0 8px}.hero h1{font-size:19px}aside{padding:20px 17px 25px}#textView{padding:13px}.editor nav{flex-wrap:wrap}.editor nav .copy-rich{margin-left:0}}
+@media(max-width:900px){main{justify-items:start}.app{width:860px;min-width:860px;margin:0}.hero{width:860px;min-width:860px;margin:0}}
+@media(max-width:760px){body{overflow:auto}header{height:58px;padding:0 15px}header b{font-size:18px}.brand-sparkle{width:28px;height:28px;flex-basis:28px}main{height:auto;min-height:calc(100vh - 58px);display:block;padding:10px 8px 24px}.app{grid-template-columns:1fr;width:auto;min-width:0;margin:0 8px}.hero{width:auto;min-width:0;margin:0 8px}.hero h1{font-size:19px}aside{padding:20px 17px 25px}#textView{padding:16px}.editor nav{flex-wrap:wrap}.editor nav .copy-rich{margin-left:0}}
