@@ -742,25 +742,77 @@ document.querySelectorAll("nav button[data-tab]").forEach((button) => button.onc
   $("#rich").hidden = imageMode;
   $("#png").hidden = !imageMode;
 });
+async function sourceToDataUrl(source) {
+  if (!source || source.startsWith("data:") || source.startsWith("blob:")) return source;
+  try {
+    const response = await fetch(source, { mode: "cors", cache: "force-cache" });
+    if (!response.ok) return "";
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return "";
+  }
+}
+
+async function capturePreviewCanvas(element, scale = 2) {
+  const width = Math.ceil(element.scrollWidth);
+  const height = Math.ceil(element.scrollHeight);
+  const clone = element.cloneNode(true);
+  const originals = [element, ...element.querySelectorAll("*")];
+  const copies = [clone, ...clone.querySelectorAll("*")];
+  originals.forEach((original, index) => {
+    const computed = getComputedStyle(original);
+    for (const property of computed) {
+      copies[index].style.setProperty(property, computed.getPropertyValue(property), computed.getPropertyPriority(property));
+    }
+  });
+  const originalImages = [...element.querySelectorAll("img")];
+  const clonedImages = [...clone.querySelectorAll("img")];
+  await Promise.all(originalImages.map(async (image, index) => {
+    const localSource = await sourceToDataUrl(image.currentSrc || image.src);
+    if (localSource) clonedImages[index].src = localSource;
+    else clonedImages[index].remove();
+  }));
+  clone.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+  const markup = new XMLSerializer().serializeToString(clone);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%">${markup}</foreignObject></svg>`;
+  const svgUrl = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const output = new Image();
+      output.onload = () => resolve(output);
+      output.onerror = () => reject(new Error("미리보기를 이미지로 변환하지 못했습니다."));
+      output.src = svgUrl;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const context = canvas.getContext("2d");
+    context.scale(scale, scale);
+    context.drawImage(image, 0, 0, width, height);
+    return canvas;
+  } finally {
+    URL.revokeObjectURL(svgUrl);
+  }
+}
+
 $("#png").onclick = async () => {
   const button = $("#png");
   const originalLabel = button.textContent;
   button.disabled = true;
   button.textContent = "PNG 만드는 중…";
   try {
-    if (typeof html2canvas !== "function") throw new Error("PNG 저장 모듈을 불러오지 못했습니다.");
     await document.fonts.ready;
     renderImagePreview();
     await Promise.all([...$("#imageCapture").querySelectorAll("img")].map((image) => image.complete ? Promise.resolve() : new Promise((resolve) => {
       image.onload = image.onerror = resolve;
     })));
-    const canvas = await html2canvas($("#imageCapture"), {
-      backgroundColor: null,
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,
-      logging: false
-    });
+    const canvas = await capturePreviewCanvas($("#imageCapture"), 2);
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob((result) => result ? resolve(result) : reject(new Error("PNG 변환에 실패했습니다.")), "image/png");
     });
