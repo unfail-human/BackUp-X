@@ -808,10 +808,21 @@ $("#png").onclick = async () => {
     await Promise.all([...$("#imageCapture").querySelectorAll("img")].map((image) => image.complete ? Promise.resolve() : new Promise((resolve) => {
       image.onload = image.onerror = resolve;
     })));
-    const canvas = await capturePreviewCanvas($("#imageCapture"), 2);
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob((result) => result ? resolve(result) : reject(new Error("PNG 변환에 실패했습니다.")), "image/png");
-    });
+    let canvas;
+    let blob;
+    try {
+      canvas = await capturePreviewCanvas($("#imageCapture"), 2);
+      blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((result) => result ? resolve(result) : reject(new Error("DOM PNG 변환 실패")), "image/png");
+      });
+    } catch (previewError) {
+      console.warn("동일 화면 캡처가 차단되어 안전 저장 방식으로 전환합니다.", previewError);
+      await draw();
+      canvas = $("#canvas");
+      blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((result) => result ? resolve(result) : reject(new Error("PNG 변환에 실패했습니다.")), "image/png");
+      });
+    }
     const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.download = "backup-x-thread.png";
