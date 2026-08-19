@@ -65,6 +65,7 @@ async function loadWorkspace() {
     for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "gradientAngle", "card", "textSize", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
     if (saved.font === "KoPub Dotum") $("#font").value = "KoPub Dotum Medium";
     if (saved.font === "KoPub Batang") $("#font").value = "KoPub Batang Medium";
+    if (saved.font === "Pretendard") $("#font").value = "Pretendard Variable";
     $("#gradientStart").value = $("#bg").value;
     $("#gradientAngleValue").textContent = $("#gradientAngle").value + "°";
     updateLoadButton();
@@ -95,7 +96,7 @@ async function ensureFontLoaded(font = $("#font").value) {
 }
 
 const FONT_STACKS = {
-  "Pretendard": '"Pretendard","Pretendard Variable",sans-serif',
+  "Pretendard Variable": '"Pretendard Variable",sans-serif',
   "Noto Sans KR": '"Noto Sans KR",sans-serif',
   "KoPub Dotum Light": '"KoPub Dotum Light",sans-serif',
   "KoPub Dotum Medium": '"KoPub Dotum Medium",sans-serif',
@@ -603,7 +604,7 @@ async function draw() {
   ctx.shadowColor = "rgba(43,37,31,.14)";
   ctx.shadowBlur = 24;
   ctx.shadowOffsetY = 8;
-  ctx.fillStyle = $("#card").value;
+  ctx.fillStyle = "#ffffff";
   ctx.beginPath();
   ctx.roundRect(cardX, cardTop, width - cardX * 2, cardHeight, 20);
   ctx.fill();
