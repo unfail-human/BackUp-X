@@ -60,6 +60,11 @@ async function loadWorkspace() {
     tweets.splice(0, tweets.length, ...(saved.tweets || tweets));
     avatarData = saved.avatarData || "";
     for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "gradientAngle", "card", "textSize", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
+    if (saved.mainColor === "#9b8f7f" && saved.bg === "#d2c7b8" && saved.card === "#e8dfd3") {
+      $("#bg").value = "#f6f2eb";
+      $("#bg2").value = "#ded4c7";
+      $("#card").value = "#eee8df";
+    }
     if (saved.bgMode === "image" || !$("#bgMode").value) $("#bgMode").value = "solid";
     if (saved.font === "KoPub Dotum") $("#font").value = "KoPub Dotum Medium";
     if (saved.font === "KoPub Batang") $("#font").value = "KoPub Batang Medium";
@@ -69,6 +74,7 @@ async function loadWorkspace() {
     $("#gradientAngleValue").textContent = $("#gradientAngle").value + "°";
     updateLoadButton();
     if (saved.recommendColors != null) $("#recommendColors").checked = saved.recommendColors;
+    applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
     $("#textSizeValue").textContent = $("#textSize").value + "px";
     applyTypography();
     updateBackgroundControls();
@@ -363,20 +369,30 @@ function luminance(hex) {
   return .2126 * values[0] + .7152 * values[1] + .0722 * values[2];
 }
 function recommendedPalette(main) {
-  if (main.toLowerCase() === "#9b8f7f") return { background: "#d2c7b8", card: "#e8dfd3" };
+  if (main.toLowerCase() === "#9b8f7f") return { background: "#f6f2eb", card: "#eee8df" };
   const lightness = luminance(main);
   return {
     background: mixColors(main, "#ffffff", lightness < .3 ? .68 : .56),
     card: mixColors(main, "#ffffff", .78)
   };
 }
+function applySiteTheme(main, background, card) {
+  const root = document.documentElement;
+  root.style.setProperty("--theme", main);
+  root.style.setProperty("--theme-soft", mixColors(main, "#ffffff", .72));
+  root.style.setProperty("--theme-text", luminance(main) < .38 ? "#ffffff" : "#2e2c29");
+  root.style.setProperty("--work", background);
+  root.style.setProperty("--panel", card);
+  document.body.style.background = background;
+}
 function applyRecommendedColors() {
   const main = $("#mainColor").value;
   const palette = recommendedPalette(main);
   $("#bg").value = palette.background;
   $("#gradientStart").value = palette.background;
-  $("#bg2").value = mixColors(main, "#ffffff", .32);
+  $("#bg2").value = main.toLowerCase() === "#9b8f7f" ? "#ded4c7" : mixColors(main, "#ffffff", .68);
   $("#card").value = palette.card;
+  applySiteTheme(main, palette.background, palette.card);
   updateGradientPreview();
   draw();
   scheduleSave();
@@ -387,15 +403,16 @@ $("#recommendColors").onchange = () => {
 };
 $("#resetColors").onclick = () => {
   $("#mainColor").value = "#9b8f7f";
-  $("#bg").value = "#d2c7b8";
-  $("#bg2").value = "#b8a895";
-  $("#gradientStart").value = "#d2c7b8";
+  $("#bg").value = "#f6f2eb";
+  $("#bg2").value = "#ded4c7";
+  $("#gradientStart").value = "#f6f2eb";
   $("#gradientAngle").value = "135";
   $("#gradientAngleValue").textContent = "135°";
-  $("#card").value = "#e8dfd3";
+  $("#card").value = "#eee8df";
   $("#bgMode").value = "solid";
   $("#recommendColors").checked = true;
   updateBackgroundControls();
+  applySiteTheme("#9b8f7f", "#f6f2eb", "#eee8df");
   draw();
   scheduleSave();
 };
@@ -410,6 +427,7 @@ function updateGradientPreview() {
 $("#gradientStart").oninput = () => {
   $("#bg").value = $("#gradientStart").value;
   $("#recommendColors").checked = false;
+  applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
   updateGradientPreview(); draw(); scheduleSave();
 };
 $("#gradientAngle").oninput = () => {
@@ -657,6 +675,7 @@ $("#png").onclick = async () => {
     if ((id === "bg" || id === "bg2" || id === "card") && $("#recommendColors").checked) $("#recommendColors").checked = false;
     if (id === "bg") $("#gradientStart").value = $("#bg").value;
     if (id === "bg" || id === "bg2") updateGradientPreview();
+    if (id === "mainColor" || id === "bg" || id === "card") applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
     if (id === "font" || id === "textSize") {
       applyTypography();
       view.querySelectorAll("textarea").forEach(resizeTweetArea);
