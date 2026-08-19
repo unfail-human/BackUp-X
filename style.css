@@ -1,11 +1,17 @@
-@font-face{font-family:Pretendard;src:url("./webfonts/Pretendard.woff2") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Noto Sans KR";src:url("./webfonts/NotoSansKR-VariableFont_wght.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:Pretendard;src:url("./webfonts/Pretendard.woff2?v=24") format("woff2");font-weight:100 900;font-style:normal;font-display:block}
+@font-face{font-family:"Noto Sans KR";src:url("./webfonts/NotoSansKR-VariableFont_wght.woff2?v=24") format("woff2");font-weight:100 900;font-style:normal;font-display:block}
 @font-face{font-family:"KoPub Dotum";src:url("./webfonts/KoPubWorld Dotum Light.woff2") format("woff2");font-weight:300}
 @font-face{font-family:"KoPub Dotum";src:url("./webfonts/KoPubWorld Dotum Medium.woff2") format("woff2");font-weight:500}
 @font-face{font-family:"KoPub Dotum";src:url("./webfonts/KoPubWorld Dotum Bold.woff2") format("woff2");font-weight:700}
 @font-face{font-family:"KoPub Batang";src:url("./webfonts/KoPubWorld Batang Light.woff2") format("woff2");font-weight:300}
 @font-face{font-family:"KoPub Batang";src:url("./webfonts/KoPubWorld Batang Medium.woff2") format("woff2");font-weight:500}
 @font-face{font-family:"KoPub Batang";src:url("./webfonts/KoPubWorld Batang Bold.woff2") format("woff2");font-weight:700}
+@font-face{font-family:"KoPub Dotum Light";src:url("./webfonts/KoPubWorld Dotum Light.woff2?v=24") format("woff2");font-weight:300;font-display:block}
+@font-face{font-family:"KoPub Dotum Medium";src:url("./webfonts/KoPubWorld Dotum Medium.woff2?v=24") format("woff2");font-weight:500;font-display:block}
+@font-face{font-family:"KoPub Dotum Bold";src:url("./webfonts/KoPubWorld Dotum Bold.woff2?v=24") format("woff2");font-weight:700;font-display:block}
+@font-face{font-family:"KoPub Batang Light";src:url("./webfonts/KoPubWorld Batang Light.woff2?v=24") format("woff2");font-weight:300;font-display:block}
+@font-face{font-family:"KoPub Batang Medium";src:url("./webfonts/KoPubWorld Batang Medium.woff2?v=24") format("woff2");font-weight:500;font-display:block}
+@font-face{font-family:"KoPub Batang Bold";src:url("./webfonts/KoPubWorld Batang Bold.woff2?v=24") format("woff2");font-weight:700;font-display:block}
 :root{--line:#e0d8ce;--line-strong:#cfc3b6;--text:#2e2c29;--muted:#81796f;--panel:#e8dfd3;--work:#d2c7b8;--white:#fff;--soft:#eee7de;--hover:#e4dbd0;--theme:#9b8f7f;--theme-soft:#cfc2b3;--theme-text:#2e2c29;--active-font:"Pretendard",sans-serif;--tweet-font-size:15px;--shadow:0 16px 52px rgba(40,35,30,.12)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -28,7 +34,6 @@ h3{font-size:11px;margin:0 0 14px;font-weight:800;letter-spacing:-.01em}
 label{display:block;font-size:9px;font-weight:650;color:#77726b;margin:12px 0}
 input:not([type=checkbox]):not([type=color]),select{display:block;width:100%;min-height:38px;margin-top:7px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:7px;background:var(--white);outline:none;font-size:10px}
 input:focus,select:focus,textarea:focus{border-color:#bbb4aa!important;box-shadow:0 0 0 3px rgba(120,110,100,.07)}
-#avatarFile{padding:8px;font-size:9px}
 aside>button{width:100%;min-height:38px;margin-top:10px;border:1px solid color-mix(in srgb,var(--theme) 55%,#bbb);border-radius:7px;background:var(--theme);color:var(--theme-text);font-size:10px;font-weight:750;transition:background .18s,filter .18s,transform .18s,box-shadow .18s}aside>button:not(:disabled):hover{filter:saturate(1.25) brightness(.86);transform:translateY(-1px);box-shadow:0 6px 14px color-mix(in srgb,var(--theme) 28%,transparent)}aside>button:not(:disabled):active{transform:translateY(0);box-shadow:none}aside>button:disabled{border-color:var(--line-strong);background:#dedbd6;color:#aaa49c;cursor:not-allowed;filter:none;box-shadow:none}
 .import-status{display:grid;grid-template-columns:15px 1fr auto;align-items:center;gap:7px;min-height:32px;margin:8px 0 0;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:9px;color:var(--muted)}.import-status[hidden]{display:none}.import-status i{width:12px;height:12px;border:2px solid #d8d3cb;border-top-color:var(--theme);border-radius:50%;animation:spin .8s linear infinite}.import-status b{font-size:9px;color:#77726b}.import-status.done i{border:0;animation:none}.import-status.done i:before{content:"✓";display:block;color:#6f8e72;font-size:13px;font-weight:800}.import-status.error i{border:0;animation:none}.import-status.error i:before{content:"!";display:grid;place-items:center;width:13px;height:13px;border-radius:50%;background:#aa7777;color:#fff;font-size:8px;font-weight:800}@keyframes spin{to{transform:rotate(360deg)}}
 hr{border:0;border-top:1px solid var(--line);margin:24px 0}
@@ -36,6 +41,7 @@ hr{border:0;border-top:1px solid var(--line);margin:24px 0}
 .reset-colors{margin-top:6px!important;min-height:30px!important;background:#fff!important;color:#6e675f!important}.archive-help{margin:7px 0 10px;font-size:8px;line-height:1.55;color:var(--muted)}.archive-upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.archive-upload span{display:grid;place-items:center;width:100%;min-height:38px;margin-top:7px;border:1px dashed var(--line-strong);border-radius:7px;background:#fff;color:#625e58;font-size:10px;font-weight:750;cursor:pointer}.archive-upload span:hover{background:var(--hover)}
 .colors label{margin-top:4px}
 .colors input{display:block;width:100%;height:32px;margin-top:6px;padding:3px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.gradient-panel{display:grid;gap:10px;margin:9px 0 12px;padding:11px;border:1px solid var(--line);border-radius:9px;background:color-mix(in srgb,var(--panel) 45%,#fff)}.gradient-preview{height:52px;border:1px solid var(--line-strong);border-radius:7px}.gradient-colors{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gradient-colors label,.gradient-angle{margin:0}.gradient-colors input{display:block;width:100%;height:34px;margin-top:6px;padding:3px;border:1px solid var(--line);border-radius:6px;background:#fff}.gradient-angle span{display:flex;justify-content:space-between;align-items:center}.gradient-angle b{color:var(--text);font-size:9px}.gradient-angle input{margin-top:8px}
 input[type=range]{accent-color:#8f8980}
 input[type=checkbox]{width:15px;height:15px;accent-color:#7e786f;vertical-align:-3px;margin-right:6px}
 .editor{min-width:0;display:flex;flex-direction:column;background:color-mix(in srgb,var(--panel) 35%,#fff)}
