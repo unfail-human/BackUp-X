@@ -4,10 +4,13 @@ const tweets = [
 ];
 const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
-const NOTICE_VERSION = "1.5";
+const NOTICE_VERSION = "1.6";
 let avatarData = "";
 let avatarImage = null;
 let saveTimer = null;
+let archiveTweets = [];
+let archiveAccount = null;
+let archiveFiles = null;
 
 function openWorkspaceDb() {
   return new Promise((resolve, reject) => {
@@ -21,6 +24,7 @@ function workspaceState() {
   return {
     tweets, avatarData, url: $("#url").value, mainColor: $("#mainColor").value,
     bg: $("#bg").value, card: $("#card").value, size: $("#size").value,
+    imageSize: $("#imageSize").value,
     font: $("#font").value, profile: $("#profile").checked,
     date: $("#date").checked, link: $("#link").checked
   };
@@ -58,9 +62,10 @@ async function loadWorkspace() {
     if (!saved) { $("#saveState").lastChild.textContent = " 자동 저장 준비"; return; }
     tweets.splice(0, tweets.length, ...(saved.tweets || tweets));
     avatarData = saved.avatarData || "";
-    for (const id of ["url", "mainColor", "bg", "card", "size", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
+    for (const id of ["url", "mainColor", "bg", "card", "size", "imageSize", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
     for (const id of ["profile", "date", "link"]) if (saved[id] != null) $("#" + id).checked = saved[id];
     applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
+    $("#imageSizeValue").textContent = $("#imageSize").value + "px";
     if (avatarData) { avatarImage = new Image(); avatarImage.src = avatarData; }
     render();
     $("#saveState").className = "saved";
@@ -233,28 +238,117 @@ function setImportStatus(type, label, percent = "") {
   status.querySelector("span").textContent = label;
   status.querySelector("b").textContent = percent === "" ? "" : percent + "%";
 }
-$("#load").onclick = async () => {
-  const url = $("#url").value.trim();
-  if (!/^https?:\/\/(x\.com|twitter\.com)\//i.test(url)) {
-    setImportStatus("error", "올바른 내 X 트윗 링크를 입력해 주세요");
-    return;
+
+function archiveStatus(type, label, percent = "") {
+  const status = $("#archiveStatus");
+  status.hidden = false;
+  status.className = "import-status" + (type ? " " + type : "");
+  status.querySelector("span").textContent = label;
+  status.querySelector("b").textContent = percent === "" ? "" : percent + "%";
+}
+function decodeArchiveJs(bytes) {
+  const source = new TextDecoder("utf-8").decode(bytes);
+  const start = source.indexOf("[");
+  if (start < 0) throw new Error("archive data not found");
+  return JSON.parse(source.slice(start));
+}
+function findArchiveEntry(pattern) {
+  return Object.keys(archiveFiles || {}).find((name) => pattern.test(name));
+}
+function mimeFor(name) {
+  const extension = name.split(".").pop().toLowerCase();
+  return { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp" }[extension] || "application/octet-stream";
+}
+function bytesToDataUrl(bytes, name) {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  return `data:${mimeFor(name)};base64,${btoa(binary)}`;
+}
+function mediaForTweet(tweet) {
+  const id = tweet.id_str;
+  return Object.keys(archiveFiles || {})
+    .filter((name) => /tweets_media\//.test(name) && name.split("/").pop().startsWith(id + "-") && /\.(jpe?g|png|gif|webp)$/i.test(name))
+    .sort()
+    .map((name) => bytesToDataUrl(archiveFiles[name], name));
+}
+function archiveDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value || "" : new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+function buildThread(firstId) {
+  const byParent = new Map();
+  archiveTweets.forEach((tweet) => {
+    const parent = tweet.in_reply_to_status_id_str;
+    if (!parent) return;
+    if (!byParent.has(parent)) byParent.set(parent, []);
+    byParent.get(parent).push(tweet);
+  });
+  const first = archiveTweets.find((tweet) => tweet.id_str === firstId);
+  if (!first) return [];
+  const result = [first];
+  let current = first;
+  while (true) {
+    const candidates = (byParent.get(current.id_str) || []).filter((tweet) => !tweet.in_reply_to_user_id_str || tweet.in_reply_to_user_id_str === current.user_id_str || tweet.in_reply_to_screen_name?.toLowerCase() === archiveAccount.username.toLowerCase());
+    if (!candidates.length) break;
+    candidates.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    current = candidates[0];
+    result.push(current);
   }
-  setImportStatus("", "불러오는 중", 10);
-  const api = window.BACKUP_X_API_URL;
-  if (!api) {
-    setTimeout(() => setImportStatus("error", "X 수집 서버 연결이 필요합니다"), 350);
-    return;
-  }
+  return result;
+}
+
+$("#archiveFile").onchange = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!window.fflate) { archiveStatus("error", "ZIP 도구를 불러오지 못했습니다"); return; }
   try {
-    setImportStatus("", "계정과 타래 확인 중", 35);
-    const response = await fetch(api + "?url=" + encodeURIComponent(url));
-    if (!response.ok) throw new Error("import failed");
-    setImportStatus("", "사진 원본을 가져오는 중", 75);
-    const data = await response.json();
-    window.applyImportedThread(data.tweets || data);
-  } catch {
-    setImportStatus("error", "타래를 불러오지 못했습니다");
+    archiveStatus("", "ZIP 여는 중", 15);
+    archiveFiles = window.fflate.unzipSync(new Uint8Array(await file.arrayBuffer()));
+    archiveStatus("", "계정과 트윗 읽는 중", 55);
+    const tweetsName = findArchiveEntry(/(^|\/)data\/tweets\.js$/i) || findArchiveEntry(/(^|\/)tweets\.js$/i);
+    const accountName = findArchiveEntry(/(^|\/)data\/account\.js$/i) || findArchiveEntry(/(^|\/)account\.js$/i);
+    if (!tweetsName || !accountName) throw new Error("required archive files missing");
+    archiveTweets = decodeArchiveJs(archiveFiles[tweetsName]).map((item) => item.tweet || item);
+    const accountItem = decodeArchiveJs(archiveFiles[accountName])[0];
+    const account = accountItem.account || accountItem;
+    archiveAccount = { username: account.username || "unknown", name: account.accountDisplayName || account.username || "이름 없음" };
+    const profileName = findArchiveEntry(/(^|\/)data\/profile\.js$/i) || findArchiveEntry(/(^|\/)profile\.js$/i);
+    if (profileName) {
+      const profileItem = decodeArchiveJs(archiveFiles[profileName])[0];
+      const profile = profileItem.profile || profileItem;
+      const avatarName = profile.avatarMediaUrl ? Object.keys(archiveFiles).find((name) => name.endsWith(profile.avatarMediaUrl.split("/").pop())) : null;
+      if (avatarName) {
+        avatarData = bytesToDataUrl(archiveFiles[avatarName], avatarName);
+        avatarImage = new Image();
+        avatarImage.src = avatarData;
+      }
+    }
+    archiveStatus("done", `${archiveAccount.name} · 트윗 ${archiveTweets.length.toLocaleString()}개`, 100);
+    scheduleSave();
+  } catch (error) {
+    console.error(error);
+    archiveFiles = null; archiveTweets = []; archiveAccount = null;
+    archiveStatus("error", "올바른 X 데이터 아카이브 ZIP인지 확인해 주세요");
   }
+};
+
+$("#load").onclick = () => {
+  if (!archiveTweets.length || !archiveAccount) { setImportStatus("error", "먼저 X 데이터 아카이브 ZIP을 선택해 주세요"); return; }
+  const url = $("#url").value.trim();
+  const match = url.match(/status\/(\d+)/);
+  if (!match) { setImportStatus("error", "타래의 첫 트윗 링크를 입력해 주세요"); return; }
+  setImportStatus("", "아카이브에서 타래 찾는 중", 35);
+  const thread = buildThread(match[1]);
+  if (!thread.length) { setImportStatus("error", "ZIP에서 해당 트윗을 찾지 못했습니다"); return; }
+  setImportStatus("", "원본 사진 가져오는 중", 75);
+  window.applyImportedThread(thread.map((tweet) => ({
+    name: archiveAccount.name,
+    username: archiveAccount.username,
+    date: archiveDate(tweet.created_at),
+    text: tweet.full_text || tweet.text || "",
+    media: mediaForTweet(tweet).map((url) => ({ original_url: url }))
+  })));
 };
 
 function hexToRgb(hex) {
@@ -275,11 +369,11 @@ function luminance(hex) {
   return .2126 * values[0] + .7152 * values[1] + .0722 * values[2];
 }
 function recommendedPalette(main) {
-  if (main.toLowerCase() === "#9b8f7f") return { background: "#dedbd4", card: "#fbfaf8" };
+  if (main.toLowerCase() === "#9b8f7f") return { background: "#d2c7b8", card: "#e8dfd3" };
   const lightness = luminance(main);
   return {
-    background: mixColors(main, "#ffffff", lightness < .3 ? .86 : .78),
-    card: mixColors(main, "#ffffff", .95)
+    background: mixColors(main, "#ffffff", lightness < .3 ? .68 : .56),
+    card: mixColors(main, "#ffffff", .78)
   };
 }
 function applySiteTheme(main, background, card) {
@@ -302,9 +396,9 @@ $("#recommendColors").onclick = () => {
 };
 $("#resetColors").onclick = () => {
   $("#mainColor").value = "#9b8f7f";
-  $("#bg").value = "#dedbd4";
-  $("#card").value = "#fbfaf8";
-  applySiteTheme("#9b8f7f", "#dedbd4", "#fbfaf8");
+  $("#bg").value = "#d2c7b8";
+  $("#card").value = "#e8dfd3";
+  applySiteTheme("#9b8f7f", "#d2c7b8", "#e8dfd3");
   draw();
   scheduleSave();
 };
@@ -373,7 +467,7 @@ async function draw() {
   const ctx = canvas.getContext("2d");
   const width = 720;
   const padding = 48;
-  const fontSize = Number($("#size").value);
+  const fontSize = Number($("#imageSize").value);
   const font = $("#font").value;
   const showProfile = $("#profile").checked;
   const showDate = $("#date").checked;
@@ -470,9 +564,10 @@ $("#png").onclick = async () => {
   anchor.href = $("#canvas").toDataURL();
   anchor.click();
 };
-["mainColor", "bg", "card", "size", "profile", "date", "link", "font"].forEach((id) => {
+["mainColor", "bg", "card", "size", "imageSize", "profile", "date", "link", "font"].forEach((id) => {
   $("#" + id).oninput = () => {
     if (id === "font") view.style.fontFamily = $("#" + id).value;
+    if (id === "imageSize") $("#imageSizeValue").textContent = $("#imageSize").value + "px";
     draw();
     scheduleSave();
   };
