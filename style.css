@@ -148,8 +148,9 @@ header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacin
 #imagePreviewContent .tweet-media img{pointer-events:none}
 @media(max-width:760px){#imageView{padding:14px}#imageCapture{padding:16px}}
 
-/* 2026-08-19 · 넓은 편집 및 미리보기 작업 폭 */
-.app{width:min(1320px,calc(100vw - 32px));max-width:1320px;grid-template-columns:310px minmax(0,1fr)}
+/* 2026-08-20 · 이미지 미리보기에서만 넓어지는 작업 폭 */
+.app{width:min(1120px,calc(100vw - 32px));max-width:1120px;grid-template-columns:310px minmax(0,1fr)}
+.app.image-preview-mode{width:min(1320px,calc(100vw - 32px));max-width:1320px}
 #imageView{width:100%;min-width:0}
 #imageCapture{min-width:100%;max-width:none}
-@media(max-width:900px){.app{width:auto;max-width:none;grid-template-columns:1fr}}
+@media(max-width:900px){.app,.app.image-preview-mode{width:auto;max-width:none;grid-template-columns:1fr}}
