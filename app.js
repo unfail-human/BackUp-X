@@ -781,24 +781,20 @@ async function capturePreviewCanvas(element, scale = 2) {
   clone.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
   const markup = new XMLSerializer().serializeToString(clone);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%">${markup}</foreignObject></svg>`;
-  const svgUrl = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
-  try {
-    const image = await new Promise((resolve, reject) => {
-      const output = new Image();
-      output.onload = () => resolve(output);
-      output.onerror = () => reject(new Error("미리보기를 이미지로 변환하지 못했습니다."));
-      output.src = svgUrl;
-    });
-    const canvas = document.createElement("canvas");
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-    const context = canvas.getContext("2d");
-    context.scale(scale, scale);
-    context.drawImage(image, 0, 0, width, height);
-    return canvas;
-  } finally {
-    URL.revokeObjectURL(svgUrl);
-  }
+  const svgUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  const image = await new Promise((resolve, reject) => {
+    const output = new Image();
+    output.onload = () => resolve(output);
+    output.onerror = () => reject(new Error("미리보기를 이미지로 변환하지 못했습니다."));
+    output.src = svgUrl;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  const context = canvas.getContext("2d");
+  context.scale(scale, scale);
+  context.drawImage(image, 0, 0, width, height);
+  return canvas;
 }
 
 $("#png").onclick = async () => {
