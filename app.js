@@ -4,9 +4,11 @@ const tweets = [
 ];
 const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
-const NOTICE_VERSION = "1.7";
+const NOTICE_VERSION = "1.8";
 let avatarData = "";
 let avatarImage = null;
+let backgroundData = "";
+let backgroundImage = null;
 let saveTimer = null;
 
 function openWorkspaceDb() {
@@ -19,9 +21,9 @@ function openWorkspaceDb() {
 }
 function workspaceState() {
   return {
-    tweets, avatarData, url: $("#url").value, nextUrl: $("#nextUrl").value, mainColor: $("#mainColor").value,
-    bg: $("#bg").value, card: $("#card").value, size: $("#size").value,
-    imageSize: $("#imageSize").value,
+    tweets, avatarData, backgroundData, url: $("#url").value, mainColor: $("#mainColor").value,
+    bg: $("#bg").value, bg2: $("#bg2").value, bgMode: $("#bgMode").value,
+    card: $("#card").value, imageScale: $("#imageScale").value,
     font: $("#font").value, profile: $("#profile").checked,
     date: $("#date").checked, link: $("#link").checked,
     recommendColors: $("#recommendColors").checked
@@ -60,11 +62,14 @@ async function loadWorkspace() {
     if (!saved) { $("#saveState").lastChild.textContent = " 자동 저장 준비"; return; }
     tweets.splice(0, tweets.length, ...(saved.tweets || tweets));
     avatarData = saved.avatarData || "";
-    for (const id of ["url", "nextUrl", "mainColor", "bg", "card", "size", "imageSize", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
+    backgroundData = saved.backgroundData || "";
+    for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "card", "imageScale", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
     for (const id of ["profile", "date", "link", "recommendColors"]) if (saved[id] != null) $("#" + id).checked = saved[id];
     applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
-    $("#imageSizeValue").textContent = $("#imageSize").value + "px";
+    $("#imageScaleValue").textContent = $("#imageScale").value + "%";
+    updateBackgroundControls();
     if (avatarData) { avatarImage = new Image(); avatarImage.src = avatarData; }
+    if (backgroundData) { backgroundImage = new Image(); backgroundImage.onload = draw; backgroundImage.src = backgroundData; }
     render();
     $("#saveState").className = "saved";
     $("#saveState").lastChild.textContent = " 자동 저장 복원됨";
@@ -76,10 +81,11 @@ function render() {
     <article class="tweet">
       <div class="avatar">${avatarData ? `<img src="${avatarData}" alt="프로필 사진">` : "BU"}</div>
       <div>
-        <div class="meta"><b>${tweet.name}</b>${tweet.handle} · ${tweet.date}</div>
+        <div class="tweet-head"><div class="meta"><b>${tweet.name}</b>${tweet.handle} · ${tweet.date}</div><button type="button" class="insert-toggle" data-open-insert="${index}" aria-label="이 게시글 다음에 트윗 추가">+</button></div>
         <textarea data-i="${index}">${tweet.text}</textarea>
         ${tweet.media?.length ? `<div class="tweet-media">${tweet.media.map((src) => `<img src="${src}" alt="트윗 첨부 이미지" loading="lazy">`).join("")}</div>` : ""}
         <div class="tweet-media-tools"><label>원본 사진 ${tweet.media?.length ? "교체" : "추가"}<input type="file" accept="image/*" multiple data-media-i="${index}"></label>${tweet.media?.length ? `<button type="button" data-clear-media="${index}">사진 모두 지우기</button>` : ""}</div>
+        <div class="thread-insert" data-insert-box="${index}" hidden><input data-insert-url="${index}" placeholder="이 다음에 넣을 누락 트윗 링크"><button type="button" data-insert-go="${index}">추가</button></div>
       </div>
     </article>`).join("");
   view.querySelectorAll("textarea").forEach((area) => {
@@ -101,6 +107,21 @@ function render() {
   });
   view.querySelectorAll("[data-clear-media]").forEach((button) => {
     button.onclick = () => { tweets[Number(button.dataset.clearMedia)].media = []; render(); draw(); scheduleSave(); };
+  });
+  view.querySelectorAll("[data-open-insert]").forEach((button) => {
+    button.onclick = () => {
+      const box = view.querySelector(`[data-insert-box="${button.dataset.openInsert}"]`);
+      box.hidden = !box.hidden;
+      if (!box.hidden) box.querySelector("input").focus();
+    };
+  });
+  view.querySelectorAll("[data-insert-go]").forEach((button) => {
+    button.onclick = async () => {
+      const index = Number(button.dataset.insertGo);
+      const input = view.querySelector(`[data-insert-url="${index}"]`);
+      try { await importLinkedTweet(input.value.trim(), index); }
+      catch (error) { setImportStatus("error", error.message === "different author" ? "첫 트윗과 같은 계정의 링크만 추가할 수 있어요" : error.message === "invalid url" ? "올바른 누락 트윗 링크를 입력해 주세요" : "트윗을 불러오지 못했습니다"); }
+    };
   });
   view.style.fontFamily = $("#font").value;
 }
@@ -284,26 +305,23 @@ function parseOEmbed(data) {
     media: []
   };
 }
-async function importLinkedTweet(url, append) {
+async function importLinkedTweet(url, insertAfter = null) {
   if (!/^https?:\/\/(x\.com|twitter\.com)\/[^/]+\/status\/\d+/i.test(url)) throw new Error("invalid url");
-  setImportStatus("", append ? "다음 트윗 불러오는 중" : "첫 트윗 불러오는 중", 25);
+  const inserting = Number.isInteger(insertAfter);
+  setImportStatus("", inserting ? "누락 트윗 불러오는 중" : "첫 트윗 불러오는 중", 25);
   const tweet = parseOEmbed(await loadOEmbed(url));
   const handle = "@" + tweet.username;
-  if (append && tweets.length && tweets[0].handle.toLowerCase() !== handle.toLowerCase()) throw new Error("different author");
+  if (inserting && tweets.length && tweets[0].handle.toLowerCase() !== handle.toLowerCase()) throw new Error("different author");
   const item = { name: tweet.name, handle, date: tweet.date, text: tweet.text, media: [] };
-  if (append) tweets.push(item); else tweets.splice(0, tweets.length, item);
+  if (inserting) tweets.splice(insertAfter + 1, 0, item); else tweets.splice(0, tweets.length, item);
   render();
   draw();
-  setImportStatus("done", append ? `다음 트윗 추가 완료 · 총 ${tweets.length}개` : "첫 트윗 불러오기 완료", 100);
+  setImportStatus("done", inserting ? `누락 트윗 추가 완료 · 총 ${tweets.length}개` : "첫 트윗 불러오기 완료", 100);
   scheduleSave();
 }
 $("#load").onclick = async () => {
-  try { await importLinkedTweet($("#url").value.trim(), false); }
+  try { await importLinkedTweet($("#url").value.trim()); }
   catch (error) { setImportStatus("error", error.message === "invalid url" ? "올바른 공개 트윗 링크를 입력해 주세요" : "트윗을 불러오지 못했습니다"); }
-};
-$("#addTweet").onclick = async () => {
-  try { await importLinkedTweet($("#nextUrl").value.trim(), true); $("#nextUrl").value = ""; }
-  catch (error) { setImportStatus("error", error.message === "different author" ? "첫 트윗과 같은 계정의 링크만 추가할 수 있어요" : error.message === "invalid url" ? "올바른 다음 트윗 링크를 입력해 주세요" : "다음 트윗을 불러오지 못했습니다"); }
 };
 
 function hexToRgb(hex) {
@@ -344,6 +362,7 @@ function applyRecommendedColors() {
   const main = $("#mainColor").value;
   const palette = recommendedPalette(main);
   $("#bg").value = palette.background;
+  $("#bg2").value = mixColors(main, "#ffffff", .32);
   $("#card").value = palette.card;
   applySiteTheme(main, palette.background, palette.card);
   draw();
@@ -356,18 +375,48 @@ $("#recommendColors").onchange = () => {
 $("#resetColors").onclick = () => {
   $("#mainColor").value = "#9b8f7f";
   $("#bg").value = "#d2c7b8";
+  $("#bg2").value = "#b8a895";
   $("#card").value = "#e8dfd3";
+  $("#bgMode").value = "solid";
+  backgroundData = "";
+  backgroundImage = null;
   $("#recommendColors").checked = true;
+  updateBackgroundControls();
   applySiteTheme("#9b8f7f", "#d2c7b8", "#e8dfd3");
   draw();
   scheduleSave();
+};
+function updateBackgroundControls() {
+  const mode = $("#bgMode").value;
+  $("#gradientColorField").hidden = mode !== "gradient";
+  $("#backgroundImageField").hidden = mode !== "image";
+  $("#clearBackground").hidden = mode !== "image" || !backgroundData;
+}
+$("#bgMode").onchange = () => { updateBackgroundControls(); draw(); scheduleSave(); };
+$("#backgroundFile").onchange = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    backgroundData = reader.result;
+    backgroundImage = new Image();
+    backgroundImage.onload = () => { updateBackgroundControls(); draw(); scheduleSave(); };
+    backgroundImage.src = backgroundData;
+  };
+  reader.readAsDataURL(file);
+};
+$("#clearBackground").onclick = () => {
+  backgroundData = "";
+  backgroundImage = null;
+  $("#backgroundFile").value = "";
+  updateBackgroundControls(); draw(); scheduleSave();
 };
 
 function exportHtml() {
   const profile = $("#profile").checked;
   const date = $("#date").checked;
   const link = $("#link").checked;
-  const url = $("#url").value || "https://x.com/";
+  const url = ($("#url").value || "https://x.com/").split("?")[0];
   const font = $("#font").value;
   return `<section style="max-width:680px;margin:auto;font-family:'${font}',sans-serif;color:#2e2c29">${tweets.map((tweet) => `
     <article style="padding:24px 0;border-bottom:1px solid #ddd">
@@ -420,18 +469,26 @@ function loadMediaImage(source) {
     image.src = source;
   });
 }
+function drawCover(ctx, image, width, height) {
+  const ratio = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  const drawWidth = image.naturalWidth * ratio;
+  const drawHeight = image.naturalHeight * ratio;
+  ctx.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+}
 
 async function draw() {
   const canvas = $("#canvas");
   const ctx = canvas.getContext("2d");
   const width = 720;
   const padding = 48;
-  const fontSize = Number($("#imageSize").value);
+  const fontSize = 14;
+  const imageScale = Number($("#imageScale").value) / 100;
+  const pixelScale = 2 * imageScale;
   const font = $("#font").value;
   const showProfile = $("#profile").checked;
   const showDate = $("#date").checked;
   const showLink = $("#link").checked;
-  const url = $("#url").value || "https://x.com/backup_note/status/example";
+  const url = ($("#url").value || "https://x.com/backup_note/status/example").split("?")[0];
   ctx.font = `${fontSize}px "${font}"`;
   const wrapped = tweets.map((tweet) => wrapText(ctx, tweet.text, width - padding * 2 - 58));
   const mediaImages = await Promise.all(tweets.map((tweet) => Promise.all((tweet.media || []).map(loadMediaImage))));
@@ -442,14 +499,26 @@ async function draw() {
     mediaImages[index].forEach((image) => { if (image) height += mediaWidth * image.naturalHeight / image.naturalWidth + 10; });
   });
   if (showLink) height += 54;
-  canvas.width = width * 2;
-  canvas.height = Math.max(520, height) * 2;
-  ctx.scale(2, 2);
-  ctx.fillStyle = $("#bg").value;
-  ctx.fillRect(0, 0, width, canvas.height / 2);
+  const logicalHeight = Math.max(520, height);
+  canvas.width = Math.round(width * pixelScale);
+  canvas.height = Math.round(logicalHeight * pixelScale);
+  canvas.style.width = `min(100%, ${Math.round(width * imageScale)}px)`;
+  ctx.scale(pixelScale, pixelScale);
+  if ($("#bgMode").value === "gradient") {
+    const gradient = ctx.createLinearGradient(0, 0, width, logicalHeight);
+    gradient.addColorStop(0, $("#bg").value);
+    gradient.addColorStop(1, $("#bg2").value);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, logicalHeight);
+  } else if ($("#bgMode").value === "image" && backgroundImage?.complete) {
+    drawCover(ctx, backgroundImage, width, logicalHeight);
+  } else {
+    ctx.fillStyle = $("#bg").value;
+    ctx.fillRect(0, 0, width, logicalHeight);
+  }
   ctx.fillStyle = $("#card").value;
   ctx.beginPath();
-  ctx.roundRect(20, 20, width - 40, canvas.height / 2 - 40, 12);
+  ctx.roundRect(20, 20, width - 40, logicalHeight - 40, 12);
   ctx.fill();
   let y = 48;
   tweets.forEach((tweet, index) => {
@@ -523,16 +592,15 @@ $("#png").onclick = async () => {
   anchor.href = $("#canvas").toDataURL();
   anchor.click();
 };
-["mainColor", "bg", "card", "size", "imageSize", "profile", "date", "link", "font"].forEach((id) => {
+["mainColor", "bg", "bg2", "card", "imageScale", "profile", "date", "link", "font"].forEach((id) => {
   $("#" + id).oninput = () => {
     if (id === "mainColor" && $("#recommendColors").checked) { applyRecommendedColors(); return; }
-    if ((id === "bg" || id === "card") && $("#recommendColors").checked) $("#recommendColors").checked = false;
+    if ((id === "bg" || id === "bg2" || id === "card") && $("#recommendColors").checked) $("#recommendColors").checked = false;
     if (id === "font") view.style.fontFamily = $("#" + id).value;
-    if (id === "imageSize") $("#imageSizeValue").textContent = $("#imageSize").value + "px";
+    if (id === "imageScale") $("#imageScaleValue").textContent = $("#imageScale").value + "%";
     draw();
     scheduleSave();
   };
 });
 $("#url").addEventListener("input", scheduleSave);
-$("#nextUrl").addEventListener("input", scheduleSave);
 loadWorkspace();
