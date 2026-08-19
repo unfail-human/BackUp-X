@@ -153,3 +153,8 @@ header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacin
 #imageView{width:100%;min-width:0}
 #imageCapture{min-width:100%;max-width:none}
 @media(max-width:900px){.app{width:auto;max-width:none;grid-template-columns:1fr}}
+
+/* 2026-08-20 · 미리보기는 게시글 편집의 정적 복제본 */
+#imageView{padding:0;background:transparent}
+#imageCapture{display:block;width:100%;min-width:0;padding:0;background:transparent}
+#imagePreviewContent{width:100%!important;max-width:none;margin:0}
