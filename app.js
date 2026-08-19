@@ -70,6 +70,7 @@ async function loadWorkspace() {
       $("#bgMode").value = "gradient";
       localStorage.setItem("backupXGradientDefault", "1");
     }
+    if (!saved.textSize || saved.textSize === "13") $("#textSize").value = "15";
     if (saved.font === "KoPub Dotum") $("#font").value = "KoPub Dotum Medium";
     if (saved.font === "KoPub Batang") $("#font").value = "KoPub Batang Medium";
     if (saved.font === "Pretendard") $("#font").value = "Pretendard Variable";
@@ -453,7 +454,8 @@ $("#bgMode").onchange = () => { updateBackgroundControls(); draw(); scheduleSave
 
 function exportHtml() {
   const font = $("#font").value;
-  const textSize = $("#textSize").value;
+  const textSize = Number($("#textSize").value);
+  const hintSize = Math.max(10, textSize - 2);
   const safe = (value) => String(value ?? "").replace(/[&<>\"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[char]));
   const main = $("#mainColor").value;
   const line = mixColors(main, "#ffffff", .76);
@@ -461,10 +463,10 @@ function exportHtml() {
   const original = safe(($("#url").value || "").split("?")[0]);
   return `<div style="max-width:720px;margin:24px auto;padding:10px 22px 22px;border:1px solid ${line};border-radius:18px;background:#fff;font-family:'${safe(font)}','Noto Sans KR',sans-serif;font-size:${textSize}px;color:#2e2c29;box-sizing:border-box">${tweets.map((tweet, index) => `
     <div style="padding:24px 0;${index < tweets.length - 1 ? `border-bottom:1px solid ${line}` : ""}">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">${avatarData ? `<img src="${avatarData}" width="44" height="44" style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover">` : `<span style="display:inline-block;width:44px;height:44px;border-radius:50%;background:${main}"></span>`}<div style="line-height:1.35"><strong style="display:block;font-size:1em">${safe(tweet.name)}</strong><span style="display:block;margin-top:3px;color:#918d86;font-size:.82em">${safe(tweet.handle)} &nbsp;·&nbsp; ${safe(tweet.date)}</span></div></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">${avatarData ? `<img src="${avatarData}" width="44" height="44" style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover">` : `<span style="display:inline-block;width:44px;height:44px;border-radius:50%;background:${main}"></span>`}<div style="line-height:1.35"><strong style="display:block;font-size:1em">${safe(tweet.name)}</strong><span style="display:block;margin-top:3px;color:#918d86;font-size:${hintSize}px">${safe(tweet.handle)} &nbsp;·&nbsp; ${safe(tweet.date)}</span></div></div>
       <div style="white-space:pre-wrap;word-break:break-word;line-height:1.75">${safe(tweet.text)}</div>
       ${tweet.media?.map((src) => `<div style="margin-top:18px;padding:5px;border-radius:12px;background:${soft}"><img src="${safe(src)}" style="display:block;width:100%;height:auto;margin:0;border-radius:9px" alt="트윗 첨부 이미지"></div>`).join("") || ""}
-    </div>`).join("")}${original ? `<div style="margin-top:4px;padding:12px 15px;border-radius:999px;background:${soft};color:#746e66;font-size:.82em;overflow-wrap:anywhere"><a href="${original}" style="color:inherit;text-decoration:none">원문 트윗 보기 · ${original}</a></div>` : ""}</div>`;
+    </div>`).join("")}${original ? `<div style="margin-top:4px;padding:12px 15px;border-radius:999px;background:${soft};color:#746e66;font-size:${hintSize}px;overflow-wrap:anywhere"><a href="${original}" style="color:inherit;text-decoration:none">원문 트윗 보기 · ${original}</a></div>` : ""}</div>`;
 }
 $("#rich").onclick = async () => {
   const button = $("#rich");
@@ -642,10 +644,10 @@ async function draw() {
         ctx.textAlign = "left";
       }
       ctx.fillStyle = "#2e2c29";
-      ctx.font = `700 ${Math.max(13, fontSize - 1)}px ${canvasFont}`;
+      ctx.font = `700 ${fontSize}px ${canvasFont}`;
       ctx.fillText(tweet.name, contentX, y + 16);
       ctx.fillStyle = "#918d86";
-      ctx.font = `${Math.max(10, fontSize - 3)}px ${canvasFont}`;
+      ctx.font = `${Math.max(10, fontSize - 2)}px ${canvasFont}`;
       const meta = tweet.handle + (showDate ? "  ·  " + tweet.date : "");
       ctx.fillText(meta, contentX, y + 36);
       y += layout.headerHeight;
@@ -679,7 +681,7 @@ async function draw() {
     ctx.roundRect(cardX + cardPadding, pillY, width - (cardX + cardPadding) * 2, 36, 18);
     ctx.fill();
     ctx.fillStyle = "#716b64";
-    ctx.font = `${Math.max(10, fontSize - 4)}px ${canvasFont}`;
+    ctx.font = `${Math.max(10, fontSize - 2)}px ${canvasFont}`;
     const maxLink = url.length > 72 ? url.slice(0, 69) + "…" : url;
     ctx.fillText("원문  " + maxLink, cardX + cardPadding + 16, pillY + 22);
   }
