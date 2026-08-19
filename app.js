@@ -4,9 +4,69 @@ const tweets = [
 ];
 const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
-const NOTICE_VERSION = "1.4";
+const NOTICE_VERSION = "1.5";
 let avatarData = "";
 let avatarImage = null;
+let saveTimer = null;
+
+function openWorkspaceDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("BackUpXDB", 1);
+    request.onupgradeneeded = () => request.result.createObjectStore("workspace");
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+function workspaceState() {
+  return {
+    tweets, avatarData, url: $("#url").value, mainColor: $("#mainColor").value,
+    bg: $("#bg").value, card: $("#card").value, size: $("#size").value,
+    font: $("#font").value, profile: $("#profile").checked,
+    date: $("#date").checked, link: $("#link").checked
+  };
+}
+async function saveWorkspace() {
+  const indicator = $("#saveState");
+  indicator.className = "saving";
+  indicator.lastChild.textContent = " 저장 중…";
+  try {
+    const db = await openWorkspaceDb();
+    await new Promise((resolve, reject) => {
+      const request = db.transaction("workspace", "readwrite").objectStore("workspace").put(workspaceState(), "current");
+      request.onsuccess = resolve;
+      request.onerror = () => reject(request.error);
+    });
+    indicator.className = "saved";
+    indicator.lastChild.textContent = " 자동 저장됨";
+  } catch {
+    indicator.className = "";
+    indicator.lastChild.textContent = " 저장 실패";
+  }
+}
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveWorkspace, 450);
+}
+async function loadWorkspace() {
+  try {
+    const db = await openWorkspaceDb();
+    const saved = await new Promise((resolve, reject) => {
+      const request = db.transaction("workspace").objectStore("workspace").get("current");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    if (!saved) { $("#saveState").lastChild.textContent = " 자동 저장 준비"; return; }
+    tweets.splice(0, tweets.length, ...(saved.tweets || tweets));
+    avatarData = saved.avatarData || "";
+    for (const id of ["url", "mainColor", "bg", "card", "size", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
+    for (const id of ["profile", "date", "link"]) if (saved[id] != null) $("#" + id).checked = saved[id];
+    applySiteTheme($("#mainColor").value, $("#bg").value, $("#card").value);
+    if (avatarData) { avatarImage = new Image(); avatarImage.src = avatarData; }
+    render();
+    $("#saveState").className = "saved";
+    $("#saveState").lastChild.textContent = " 자동 저장 복원됨";
+  } catch { $("#saveState").lastChild.textContent = " 자동 저장 준비"; }
+}
 
 function render() {
   view.innerHTML = tweets.map((tweet, index) => `
@@ -19,21 +79,31 @@ function render() {
       </div>
     </article>`).join("");
   view.querySelectorAll("textarea").forEach((area) => {
-    area.oninput = (event) => tweets[Number(event.target.dataset.i)].text = event.target.value;
+    area.oninput = (event) => { tweets[Number(event.target.dataset.i)].text = event.target.value; scheduleSave(); };
   });
   view.style.fontFamily = $("#font").value;
 }
 render();
 window.applyImportedThread = (items) => {
   tweets.splice(0, tweets.length, ...items.map((item) => ({
-    name: item.name,
-    handle: item.handle,
-    date: item.date,
-    text: item.text,
+    name: item.name || item.author?.name || "이름 없음",
+    handle: item.handle || (item.username ? "@" + item.username : item.author?.username ? "@" + item.author.username : "@unknown"),
+    date: item.date || item.created_at || "",
+    text: item.text || "",
     media: (item.media || []).map((media) => media.original_url || media.url).filter(Boolean)
   })));
+  const author = items[0]?.author || items[0] || {};
+  const profileImage = author.profile_image_data || author.profile_image_url;
+  if (profileImage) {
+    avatarData = profileImage;
+    avatarImage = new Image();
+    if (!profileImage.startsWith("data:")) avatarImage.crossOrigin = "anonymous";
+    avatarImage.src = profileImage;
+  }
   render();
   draw();
+  setImportStatus("done", "불러오기 완료", 100);
+  scheduleSave();
 };
 if (localStorage.getItem("backupXNoticeVersion") !== NOTICE_VERSION) $("#noticeBackdrop").hidden = false;
 $("#noticeClose").onclick = () => {
@@ -126,6 +196,7 @@ $("#photoEditorApply").onclick = () => {
   avatarImage.onload = () => { render(); draw(); };
   avatarImage.src = avatarData;
   closePhotoEditor();
+  scheduleSave();
 };
 
 const photoCanvasWrap = document.querySelector(".photo-editor-canvas-wrap");
@@ -155,10 +226,35 @@ function endPhotoDrag(event) {
 photoCanvasWrap.onpointerup = endPhotoDrag;
 photoCanvasWrap.onpointercancel = endPhotoDrag;
 
-$("#load").onclick = () => {
-  $("#status").textContent = /^https?:\/\/(x\.com|twitter\.com)\//i.test($("#url").value)
-    ? "X API 연결 후 내 계정을 확인해 타래를 가져옵니다."
-    : "올바른 내 X 트윗 링크를 입력해 주세요.";
+function setImportStatus(type, label, percent = "") {
+  const status = $("#status");
+  status.hidden = false;
+  status.className = "import-status" + (type ? " " + type : "");
+  status.querySelector("span").textContent = label;
+  status.querySelector("b").textContent = percent === "" ? "" : percent + "%";
+}
+$("#load").onclick = async () => {
+  const url = $("#url").value.trim();
+  if (!/^https?:\/\/(x\.com|twitter\.com)\//i.test(url)) {
+    setImportStatus("error", "올바른 내 X 트윗 링크를 입력해 주세요");
+    return;
+  }
+  setImportStatus("", "불러오는 중", 10);
+  const api = window.BACKUP_X_API_URL;
+  if (!api) {
+    setTimeout(() => setImportStatus("error", "X 수집 서버 연결이 필요합니다"), 350);
+    return;
+  }
+  try {
+    setImportStatus("", "계정과 타래 확인 중", 35);
+    const response = await fetch(api + "?url=" + encodeURIComponent(url));
+    if (!response.ok) throw new Error("import failed");
+    setImportStatus("", "사진 원본을 가져오는 중", 75);
+    const data = await response.json();
+    window.applyImportedThread(data.tweets || data);
+  } catch {
+    setImportStatus("error", "타래를 불러오지 못했습니다");
+  }
 };
 
 function hexToRgb(hex) {
@@ -202,6 +298,7 @@ $("#recommendColors").onclick = () => {
   $("#card").value = palette.card;
   applySiteTheme(main, palette.background, palette.card);
   draw();
+  scheduleSave();
 };
 $("#resetColors").onclick = () => {
   $("#mainColor").value = "#9b8f7f";
@@ -209,6 +306,7 @@ $("#resetColors").onclick = () => {
   $("#card").value = "#fbfaf8";
   applySiteTheme("#9b8f7f", "#dedbd4", "#fbfaf8");
   draw();
+  scheduleSave();
 };
 
 function exportHtml() {
@@ -376,5 +474,8 @@ $("#png").onclick = async () => {
   $("#" + id).oninput = () => {
     if (id === "font") view.style.fontFamily = $("#" + id).value;
     draw();
+    scheduleSave();
   };
 });
+$("#url").addEventListener("input", scheduleSave);
+loadWorkspace();
