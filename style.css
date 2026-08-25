@@ -192,3 +192,11 @@ header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacin
 
 /* 2026-08-25 · 게시글 본문 편집 영역 가독성 */
 #textView .tweet textarea{min-height:120px;resize:vertical;field-sizing:content}
+
+
+/* 2026-08-25 · 티스토리 서식 복사 도움말 */
+.editor nav .copy-help{width:35px;min-width:35px;padding:0;border-radius:50%;font-weight:800}
+.copy-help-modal .notice-content ol{margin:12px 0;padding-left:20px}
+.copy-help-modal .notice-content li+li{margin-top:7px}
+.copy-help-modal .notice-content p{margin:14px 0 0;color:var(--muted)}
+@media(max-width:760px){.editor nav .copy-help{margin-left:0}}
