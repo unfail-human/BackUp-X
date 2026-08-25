@@ -130,9 +130,17 @@ async function applyTypography() {
   document.body.dataset.activeFont = font;
 }
 function resizeTweetArea(area) {
-  area.style.height = "auto";
-  area.style.height = Math.max(44, area.scrollHeight) + "px";
+  area.style.height = "0px";
+  area.style.height = Math.max(44, area.scrollHeight + 2) + "px";
 }
+function resizeAllTweetAreas() {
+  view.querySelectorAll("textarea").forEach(resizeTweetArea);
+}
+function settleTweetLayout() {
+  requestAnimationFrame(() => requestAnimationFrame(resizeAllTweetAreas));
+  document.fonts.ready.then(resizeAllTweetAreas);
+}
+window.addEventListener("resize", settleTweetLayout);
 function render() {
   view.innerHTML = tweets.map((tweet, index) => `
     <article class="tweet">
@@ -150,6 +158,7 @@ function render() {
     resizeTweetArea(area);
     area.oninput = (event) => { tweets[Number(event.target.dataset.i)].text = event.target.value; resizeTweetArea(event.target); draw(); scheduleSave(); };
   });
+  settleTweetLayout();
   view.querySelectorAll("[data-media-i]").forEach((input) => {
     input.onchange = async (event) => {
       const files = [...event.target.files];
