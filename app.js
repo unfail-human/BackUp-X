@@ -233,6 +233,12 @@ $("#noticeClose").onclick = () => {
   $("#noticeBackdrop").hidden = true;
 };
 
+const helpBackdrop = $("#copyHelpBackdrop");
+$("#copyHelp").onclick = () => { helpBackdrop.hidden = false; };
+$("#copyHelpClose").onclick = () => { helpBackdrop.hidden = true; };
+helpBackdrop.onclick = (event) => { if (event.target === helpBackdrop) helpBackdrop.hidden = true; };
+document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !helpBackdrop.hidden) helpBackdrop.hidden = true; });
+
 
 function setImportStatus(type, label, percent = "") {
   const status = $("#status");
@@ -515,13 +521,8 @@ $("#rich").onclick = async () => {
   button.textContent = "서식 복사 중…";
   button.classList.remove("copied", "copy-error");
   try {
-    const html = exportHtml();
-    const plain = tweets.map((tweet) => `${tweet.name} ${tweet.handle} · ${tweet.date}\n${tweet.text}`).join("\n\n") + ($("#url").value ? `\n\n원문: ${$("#url").value.split("?")[0]}` : "");
-    if (!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("rich clipboard unavailable");
-    await navigator.clipboard.write([new ClipboardItem({
-      "text/html": new Blob([html], {type:"text/html"}),
-      "text/plain": new Blob([plain], {type:"text/plain"})
-    })]);
+    if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+    await navigator.clipboard.writeText(exportHtml(true));
     button.classList.add("copied");
     button.textContent = "✓ HTML 서식 복사 완료";
   } catch (error) {
