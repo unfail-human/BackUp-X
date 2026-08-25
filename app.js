@@ -521,25 +521,51 @@ function exportHtml() {
 
   return `<div style="width:100%;max-width:760px;margin:24px auto;padding:0;border:1px solid ${line};border-radius:16px;background-color:#ffffff;box-shadow:0 6px 18px rgba(43,37,31,.08);box-sizing:border-box;overflow:hidden">${posts}${source}</div>`;
 }
+async function createTistoryClipboardPng() {
+  const stage = document.createElement("div");
+  stage.setAttribute("aria-hidden", "true");
+  stage.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;background:#fff;pointer-events:none;z-index:-1";
+  stage.innerHTML = exportHtml();
+  document.body.appendChild(stage);
+  const card = stage.firstElementChild;
+  card.style.width = "760px";
+  card.style.maxWidth = "760px";
+  card.style.margin = "0";
+  try {
+    await document.fonts.ready;
+    await Promise.all([...card.querySelectorAll("img")].map((image) => image.complete ? Promise.resolve() : new Promise((resolve) => {
+      image.onload = image.onerror = resolve;
+    })));
+    const canvas = await capturePreviewCanvas(card, 2);
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("이미지 서식을 만들지 못했습니다.")), "image/png");
+    });
+  } finally {
+    stage.remove();
+  }
+}
+
 $("#rich").onclick = async () => {
   const button = $("#rich");
   button.disabled = true;
-  button.textContent = "복사 중…";
+  button.textContent = "이미지 서식 만드는 중…";
   button.classList.remove("copied", "copy-error");
   try {
-    const html = exportHtml();
-    const plain = tweets.map((tweet) => `${tweet.name} ${tweet.handle} · ${tweet.date}\n${tweet.text}`).join("\n\n") + ($("#url").value ? `\n\n원문: ${$("#url").value.split("?")[0]}` : "");
-    if (navigator.clipboard?.write && window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([plain],{type:"text/plain"})})]);
-    else {
-      const holder = document.createElement("div"); holder.contentEditable = "true"; holder.innerHTML = html; holder.style.position = "fixed"; holder.style.left = "-9999px"; document.body.append(holder);
-      const range = document.createRange(); range.selectNodeContents(holder); const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range);
-      if (!document.execCommand("copy")) throw new Error("copy failed"); holder.remove(); selection.removeAllRanges();
-    }
-    button.classList.add("copied"); button.textContent = "✓ 복사 완료";
+    if (!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("이 브라우저는 이미지 클립보드 복사를 지원하지 않습니다.");
+    const pngPromise = createTistoryClipboardPng();
+    await navigator.clipboard.write([new ClipboardItem({"image/png": pngPromise})]);
+    button.classList.add("copied");
+    button.textContent = "✓ 티스토리용 서식 복사 완료";
   } catch (error) {
-    console.warn("서식 복사 실패", error); button.classList.add("copy-error"); button.textContent = "복사 실패 · 다시 시도";
+    console.warn("서식 복사 실패", error);
+    button.classList.add("copy-error");
+    button.textContent = "복사 실패 · 다시 시도";
   } finally {
-    setTimeout(() => { button.disabled = false; button.classList.remove("copied", "copy-error"); button.textContent = "서식 복사"; }, 1800);
+    setTimeout(() => {
+      button.disabled = false;
+      button.classList.remove("copied", "copy-error");
+      button.textContent = "서식 복사";
+    }, 2200);
   }
 };
 
