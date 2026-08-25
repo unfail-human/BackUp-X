@@ -164,3 +164,24 @@ header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacin
 #imageCapture{width:100%;min-width:0;padding:0;box-sizing:border-box}
 #imagePreviewContent{width:100%!important;border-radius:10px;overflow:hidden;box-shadow:0 8px 24px rgba(45,40,35,.10)}
 @media(max-width:760px){#imageView{padding:12px}}
+
+/* 2026-08-25 · 긴 타래 안정화 및 연속형 타래 레이아웃 */
+.app,.editor{min-height:0}
+.editor{overflow:hidden}
+#textView{min-height:0;overflow:auto;overscroll-behavior:contain}
+.tweet{align-items:stretch;border:0!important;border-radius:0!important;padding-top:18px;padding-bottom:0}
+.tweet:first-child{border-radius:18px 18px 0 0!important}
+.tweet:last-child{border-radius:0 0 18px 18px!important}
+.tweet:only-child{border-radius:18px!important}
+.tweet-body{position:relative;min-width:0;padding-bottom:18px;border-bottom:1px solid color-mix(in srgb,var(--theme) 16%,var(--line))}
+.tweet:last-child .tweet-body{border-bottom:0}
+.tweet:not(:last-child):before{left:36px;top:57px;bottom:-1px;width:2px;background:color-mix(in srgb,var(--theme) 42%,var(--line));z-index:0}
+.avatar{z-index:2;align-self:start;box-shadow:0 0 0 4px var(--image-card,#eee8df)}
+.tweet textarea{height:auto;max-height:none;overflow:hidden;overflow-wrap:anywhere;word-break:break-word}
+#imagePreviewContent{background:var(--image-card,#eee8df)}
+#imagePreviewContent .tweet{background:transparent}
+#imagePreviewContent .tweet-body{padding-bottom:20px}
+#imagePreviewContent .tweet:not(:first-child){padding-top:16px}
+#imagePreviewContent .tweet:not(:last-child):before{top:55px;bottom:-1px}
+#imagePreviewContent .preview-text{height:auto;min-height:0;margin-top:8px;padding:0;border:0;line-height:1.72;overflow-wrap:anywhere;word-break:break-word}
+#imagePreviewContent .avatar{box-shadow:0 0 0 4px var(--image-card,#eee8df)}
