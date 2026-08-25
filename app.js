@@ -485,10 +485,8 @@ function exportHtml() {
   const safe = (value) => String(value ?? "").replace(/[&<>"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[char]));
   const lineBreaks = (value) => safe(value).replace(/\r?\n/g, "<br>");
   const main = $("#mainColor").value;
-  const card = $("#card").value;
-  const line = mixColors(main, "#ffffff", .76);
-  const rail = mixColors(main, "#ffffff", .55);
-  const soft = mixColors(main, "#ffffff", .91);
+  const line = mixColors(main, "#ffffff", .78);
+  const soft = mixColors(main, "#ffffff", .93);
   const avatarText = luminance(main) < .45 ? "#ffffff" : "#2e2c29";
   const originalUrl = ($("#url").value || "").split("?")[0];
   const original = safe(originalUrl);
@@ -496,29 +494,32 @@ function exportHtml() {
 
   const mediaBlocks = (items) => {
     if (!items?.length) return "";
-    return `<div style="margin:18px 0 0;padding:6px;border:1px solid ${line};border-radius:12px;background-color:${soft};text-align:center">${items.map((src) => `<img src="${safe(src)}" alt="트윗 첨부 이미지" style="display:inline-block;width:${items.length > 1 ? "47%" : "100%"};height:auto;max-height:420px;margin:3px;vertical-align:middle;border:0;border-radius:8px;object-fit:contain">`).join("")}</div>`;
+    return `<div style="margin:18px 0 0;padding:6px;border:1px solid ${line};border-radius:10px;background-color:${soft};text-align:center">${items.map((src) => `<img src="${safe(src)}" alt="트윗 첨부 이미지" style="display:inline-block;width:${items.length > 1 ? "47%" : "100%"};height:auto;max-height:420px;margin:3px;vertical-align:middle;border:0;border-radius:8px;object-fit:contain">`).join("")}</div>`;
   };
 
   const posts = tweets.map((tweet, index) => {
-    const isLast = index === tweets.length - 1;
     const avatar = avatarData
-      ? `<img src="${safe(avatarData)}" width="44" height="44" align="left" alt="프로필 사진" style="float:left;display:block;width:44px;height:44px;max-width:44px;margin:0 14px 0 0;border:0;border-radius:50%;object-fit:cover">`
-      : `<span style="float:left;display:block;width:44px;height:44px;margin:0 14px 0 0;border-radius:50%;background-color:${main};color:${avatarText};font-size:12px;font-weight:700;line-height:44px;text-align:center">BU</span>`;
-    return `<div style="position:relative;min-height:238px;margin:0;padding:20px 20px 20px 18px;border:0;${isLast ? "" : `border-bottom:1px solid ${line};`}background-color:${card};box-sizing:border-box;overflow:hidden">
-      ${avatar}
-      <div style="min-height:198px;margin:0 0 0 58px;padding:0 0 0 14px;border:0;${isLast ? "" : `border-left:2px solid ${rail};`}box-sizing:border-box">
-        <p style="margin:0 0 2px;padding:0;color:#2e2c29;font-family:${fontStack};font-size:${textSize}px;font-weight:700;line-height:1.35;text-align:left">${safe(tweet.name)}</p>
-        <p style="margin:0 0 12px;padding:0;color:#918d86;font-family:${fontStack};font-size:${hintSize}px;font-weight:400;line-height:1.45;text-align:left">${safe(tweet.handle)}&nbsp;&nbsp;·&nbsp;&nbsp;${safe(tweet.date)}</p>
-        <div style="min-height:120px;margin:0;padding:0;color:#2e2c29;font-family:${fontStack};font-size:${textSize}px;font-weight:400;line-height:1.72;text-align:left;white-space:normal;word-break:break-word;overflow-wrap:anywhere">${lineBreaks(tweet.text)}</div>
-        ${mediaBlocks(tweet.media)}
-      </div>
-      <div style="clear:both;height:0;line-height:0">&nbsp;</div>
+      ? `<img src="${safe(avatarData)}" width="54" height="54" alt="프로필 사진" style="display:block;width:54px;height:54px;max-width:54px;margin:0 auto;border:0;border-radius:50%;object-fit:cover">`
+      : `<span style="display:block;width:54px;height:54px;margin:0 auto;border-radius:50%;background-color:${main};color:${avatarText};font-size:12px;font-weight:700;line-height:54px;text-align:center">BU</span>`;
+    return `<div style="margin:0;padding:0 22px;background-color:#ffffff">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" style="width:100%;margin:0;border:0;border-collapse:collapse;background-color:#ffffff">
+        <tbody><tr>
+          <td width="72" valign="top" style="width:72px;padding:28px 14px 28px 0;vertical-align:top;border:0;background-color:#ffffff">${avatar}</td>
+          <td valign="top" style="padding:28px 0;vertical-align:top;border:0;background-color:#ffffff">
+            <p style="margin:0 0 3px;padding:0;color:#2e2c29;font-family:${fontStack};font-size:${textSize}px;font-weight:700;line-height:1.35;text-align:left">${safe(tweet.name)}</p>
+            <p style="margin:0 0 18px;padding:0;color:#918d86;font-family:${fontStack};font-size:${hintSize}px;font-weight:400;line-height:1.45;text-align:left">${safe(tweet.handle)}&nbsp;&nbsp;·&nbsp;&nbsp;${safe(tweet.date)}</p>
+            <div style="margin:0;padding:0;color:#2e2c29;font-family:${fontStack};font-size:${textSize}px;font-weight:400;line-height:1.78;text-align:left;word-break:break-word;overflow-wrap:anywhere">${lineBreaks(tweet.text)}</div>
+            ${mediaBlocks(tweet.media)}
+          </td>
+        </tr></tbody>
+      </table>
+      ${index < tweets.length - 1 ? `<div style="height:1px;margin:0;background-color:${line};font-size:0;line-height:0">&nbsp;</div>` : ""}
     </div>`;
   }).join("");
 
-  const source = original ? `<div style="margin:0;padding:10px 18px 18px;background-color:${card}"><div style="padding:10px 14px;border-radius:10px;background-color:${soft};color:#746e66;font-family:${fontStack};font-size:${hintSize}px;line-height:1.5;text-align:left;word-break:break-all"><a href="${original}" style="color:#746e66;text-decoration:none">원문 트윗 보기 · ${original}</a></div></div>` : "";
+  const source = original ? `<div style="margin:0;padding:0 22px 22px;background-color:#ffffff"><div style="padding:12px 16px;border:1px solid ${line};border-radius:9px;background-color:${soft};color:#746e66;font-family:${fontStack};font-size:${hintSize}px;line-height:1.5;text-align:left;word-break:break-all"><a href="${original}" style="color:#746e66;text-decoration:none"><strong style="font-weight:600">원문 트윗 보기</strong>&nbsp;&nbsp;›&nbsp;&nbsp;${original}</a></div></div>` : "";
 
-  return `<div style="width:100%;max-width:720px;margin:24px auto;padding:0;border:1px solid ${line};border-radius:18px;background-color:${card};box-shadow:0 8px 24px rgba(43,37,31,.10);box-sizing:border-box;overflow:hidden">${posts}${source}</div>`;
+  return `<div style="width:100%;max-width:760px;margin:24px auto;padding:0;border:1px solid ${line};border-radius:16px;background-color:#ffffff;box-shadow:0 6px 18px rgba(43,37,31,.08);box-sizing:border-box;overflow:hidden">${posts}${source}</div>`;
 }
 $("#rich").onclick = async () => {
   const button = $("#rich");
