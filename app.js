@@ -487,75 +487,38 @@ function exportHtml() {
   const main = $("#mainColor").value;
   const line = mixColors(main, "#ffffff", .78);
   const soft = mixColors(main, "#ffffff", .93);
-  const avatarText = luminance(main) < .45 ? "#ffffff" : "#2e2c29";
   const originalUrl = ($("#url").value || "").split("?")[0];
   const original = safe(originalUrl);
   const fontStack = `'${safe(font)}','Pretendard Variable','Pretendard','Noto Sans KR',Arial,sans-serif`;
 
-  const mediaBlocks = (items) => {
-    if (!items?.length) return "";
-    return `<div style="margin:18px 0 0;padding:6px;border:1px solid ${line};border-radius:10px;background-color:${soft};text-align:center">${items.map((src) => `<img src="${safe(src)}" alt="트윗 첨부 이미지" style="display:inline-block;width:${items.length > 1 ? "47%" : "100%"};height:auto;max-height:420px;margin:3px;vertical-align:middle;border:0;border-radius:8px;object-fit:contain">`).join("")}</div>`;
-  };
-
   const posts = tweets.map((tweet, index) => {
-    const avatar = avatarData
-      ? `<img src="${safe(avatarData)}" width="54" height="54" alt="프로필 사진" style="display:block;width:54px;height:54px;max-width:54px;margin:0 auto;border:0;border-radius:50%;object-fit:cover">`
-      : `<span style="display:block;width:54px;height:54px;margin:0 auto;border-radius:50%;background-color:${main};color:${avatarText};font-size:12px;font-weight:700;line-height:54px;text-align:center">BU</span>`;
-    return `<div style="margin:0;padding:0 22px;background-color:#ffffff">
-      <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" style="width:100%;margin:0;border:0;border-collapse:collapse;background-color:#ffffff">
-        <tbody><tr>
-          <td width="72" valign="top" style="width:72px;padding:28px 14px 28px 0;vertical-align:top;border:0;background-color:#ffffff">${avatar}</td>
-          <td valign="top" style="padding:28px 0;vertical-align:top;border:0;background-color:#ffffff">
-            <p style="margin:0 0 3px;padding:0;color:#2e2c29;font-family:${fontStack};font-size:${textSize}px;font-weight:700;line-height:1.35;text-align:left">${safe(tweet.name)}</p>
-            <p style="margin:0 0 18px;padding:0;color:#918d86;font-family:${fontStack};font-size:${hintSize}px;font-weight:400;line-height:1.45;text-align:left">${safe(tweet.handle)}&nbsp;&nbsp;·&nbsp;&nbsp;${safe(tweet.date)}</p>
-            <div style="margin:0;padding:0;color:#2e2c29;font-family:${fontStack};font-size:${textSize}px;font-weight:400;line-height:1.78;text-align:left;word-break:break-word;overflow-wrap:anywhere">${lineBreaks(tweet.text)}</div>
-            ${mediaBlocks(tweet.media)}
-          </td>
-        </tr></tbody>
-      </table>
-      ${index < tweets.length - 1 ? `<div style="height:1px;margin:0;background-color:${line};font-size:0;line-height:0">&nbsp;</div>` : ""}
-    </div>`;
+    const avatar = avatarData ? `<img src="${safe(avatarData)}" width="44" height="44" alt="프로필 사진" style="display:inline-block;width:44px;height:44px;margin:0 12px 0 0;border:0;border-radius:50%;object-fit:cover;vertical-align:middle">` : "";
+    const media = (tweet.media || []).map((src) => `<p style="margin:14px 0 0;text-align:center"><img src="${safe(src)}" alt="트윗 첨부 이미지" style="display:block;max-width:100%;height:auto;margin:0 auto;border:1px solid ${line};border-radius:10px"></p>`).join("");
+    return `<tr><td style="padding:24px 26px;border:0;${index < tweets.length - 1 ? `border-bottom:1px solid ${line};` : ""}background-color:#ffffff;vertical-align:top">
+      <p style="margin:0 0 16px;padding:0;font-family:${fontStack};line-height:1.4;text-align:left">${avatar}<span style="display:inline-block;vertical-align:middle"><strong style="display:block;color:#2e2c29;font-size:${textSize}px;line-height:1.3">${safe(tweet.name)}</strong><span style="display:block;margin-top:3px;color:#918d86;font-size:${hintSize}px;line-height:1.4">${safe(tweet.handle)}&nbsp;&nbsp;·&nbsp;&nbsp;${safe(tweet.date)}</span></span></p>
+      <div style="margin:0;padding:0;color:#2e2c29;font-family:${fontStack};font-size:${textSize}px;line-height:1.75;text-align:left;word-break:break-word">${lineBreaks(tweet.text)}</div>
+      ${media}
+    </td></tr>`;
   }).join("");
-
-  const source = original ? `<div style="margin:0;padding:0 22px 22px;background-color:#ffffff"><div style="padding:12px 16px;border:1px solid ${line};border-radius:9px;background-color:${soft};color:#746e66;font-family:${fontStack};font-size:${hintSize}px;line-height:1.5;text-align:left;word-break:break-all"><a href="${original}" style="color:#746e66;text-decoration:none"><strong style="font-weight:600">원문 트윗 보기</strong>&nbsp;&nbsp;›&nbsp;&nbsp;${original}</a></div></div>` : "";
-
-  return `<div style="width:100%;max-width:760px;margin:24px auto;padding:0;border:1px solid ${line};border-radius:16px;background-color:#ffffff;box-shadow:0 6px 18px rgba(43,37,31,.08);box-sizing:border-box;overflow:hidden">${posts}${source}</div>`;
-}
-async function createTistoryClipboardPng() {
-  const stage = document.createElement("div");
-  stage.setAttribute("aria-hidden", "true");
-  stage.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;background:#fff;pointer-events:none;z-index:-1";
-  stage.innerHTML = exportHtml();
-  document.body.appendChild(stage);
-  const card = stage.firstElementChild;
-  card.style.width = "760px";
-  card.style.maxWidth = "760px";
-  card.style.margin = "0";
-  try {
-    await document.fonts.ready;
-    await Promise.all([...card.querySelectorAll("img")].map((image) => image.complete ? Promise.resolve() : new Promise((resolve) => {
-      image.onload = image.onerror = resolve;
-    })));
-    const canvas = await capturePreviewCanvas(card, 2);
-    return await new Promise((resolve, reject) => {
-      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("이미지 서식을 만들지 못했습니다.")), "image/png");
-    });
-  } finally {
-    stage.remove();
-  }
+  const source = original ? `<tr><td style="padding:0 18px 18px;border:0;background-color:#ffffff"><p style="margin:0;padding:10px 14px;background-color:${soft};color:#746e66;font-family:${fontStack};font-size:${hintSize}px;line-height:1.5;text-align:left;word-break:break-all"><a href="${original}" style="color:#746e66;text-decoration:none"><strong>원문 트윗 보기</strong>&nbsp;&nbsp;›&nbsp;&nbsp;${original}</a></p></td></tr>` : "";
+  return `<table data-ke-align="alignCenter" border="0" cellpadding="0" cellspacing="0" style="width:100%;max-width:760px;margin:24px auto;border:1px solid ${line};border-collapse:separate;border-spacing:0;background-color:#ffffff"><tbody>${posts}${source}</tbody></table>`;
 }
 
 $("#rich").onclick = async () => {
   const button = $("#rich");
   button.disabled = true;
-  button.textContent = "이미지 서식 만드는 중…";
+  button.textContent = "서식 복사 중…";
   button.classList.remove("copied", "copy-error");
   try {
-    if (!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("이 브라우저는 이미지 클립보드 복사를 지원하지 않습니다.");
-    const pngPromise = createTistoryClipboardPng();
-    await navigator.clipboard.write([new ClipboardItem({"image/png": pngPromise})]);
+    const html = exportHtml();
+    const plain = tweets.map((tweet) => `${tweet.name} ${tweet.handle} · ${tweet.date}\n${tweet.text}`).join("\n\n") + ($("#url").value ? `\n\n원문: ${$("#url").value.split("?")[0]}` : "");
+    if (!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("rich clipboard unavailable");
+    await navigator.clipboard.write([new ClipboardItem({
+      "text/html": new Blob([html], {type:"text/html"}),
+      "text/plain": new Blob([plain], {type:"text/plain"})
+    })]);
     button.classList.add("copied");
-    button.textContent = "✓ 티스토리용 서식 복사 완료";
+    button.textContent = "✓ HTML 서식 복사 완료";
   } catch (error) {
     console.warn("서식 복사 실패", error);
     button.classList.add("copy-error");
@@ -565,7 +528,7 @@ $("#rich").onclick = async () => {
       button.disabled = false;
       button.classList.remove("copied", "copy-error");
       button.textContent = "서식 복사";
-    }, 2200);
+    }, 2000);
   }
 };
 
