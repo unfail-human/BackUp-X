@@ -509,24 +509,6 @@ function exportHtml(includeEmbeddedAvatar = false) {
   return `<table data-ke-align="alignCenter" border="0" cellpadding="0" cellspacing="0" style="width:100%;max-width:760px;margin:24px auto;border:1px solid ${line};border-collapse:separate;border-spacing:0;background-color:#ffffff"><tbody>${posts}${source}</tbody></table>`;
 }
 
-$("#htmlCopy").onclick = async () => {
-  const button = $("#htmlCopy");
-  button.disabled = true;
-  button.textContent = "HTML 코드 복사 중…";
-  try {
-    await navigator.clipboard.writeText(exportHtml(true));
-    button.textContent = "✓ HTML 코드 복사 완료";
-  } catch (error) {
-    console.warn("HTML 코드 복사 실패", error);
-    button.textContent = "복사 실패 · 다시 시도";
-  } finally {
-    setTimeout(() => {
-      button.disabled = false;
-      button.textContent = "HTML 코드 복사";
-    }, 2200);
-  }
-};
-
 $("#rich").onclick = async () => {
   const button = $("#rich");
   button.disabled = true;
