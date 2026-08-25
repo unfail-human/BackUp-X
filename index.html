@@ -16,7 +16,7 @@
 <meta name="twitter:image" content="https://unfail-human.github.io/BackUp-X/og-image.png">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="apple-touch-icon" href="./favicon.png">
-<link rel="stylesheet" href="style.css?v=67">
+<link rel="stylesheet" href="style.css?v=68">
 </head>
 <body>
 <header>
@@ -88,6 +88,7 @@
 <button data-tab="image">이미지 미리보기</button>
 <button id="png" class="save-png" type="button" hidden aria-live="polite">PNG 저장</button>
 <button id="rich" class="copy-rich" type="button" aria-live="polite">서식 복사</button>
+<button id="copyHelp" class="copy-help" type="button" aria-label="서식 복사 사용법" title="서식 복사 사용법">?</button>
 </nav>
 <div id="textView">
 </div>
@@ -110,6 +111,23 @@ BackUp-X의 기능과 화면이 새롭게 업데이트되었습니다.
 <button id="noticeClose" type="button">확인</button>
 </section>
 </div>
-<script src="app.js?v=74"></script>
+<div class="notice-backdrop" id="copyHelpBackdrop" hidden>
+<section class="notice-modal copy-help-modal" role="dialog" aria-modal="true" aria-labelledby="copyHelpTitle">
+<div class="notice-kicker">TISTORY HTML COPY</div>
+<h2 id="copyHelpTitle">서식 복사 사용법</h2>
+<div class="notice-content">
+<b>티스토리 HTML 모드에 붙여넣어 주세요.</b>
+<ol>
+<li>BackUp-X에서 트윗을 불러오고 내용을 편집합니다.</li>
+<li><strong>서식 복사</strong> 버튼을 누릅니다.</li>
+<li>티스토리 편집기 상단의 <strong>기본모드 → HTML</strong>을 선택합니다.</li>
+<li>원하는 위치에 붙여넣은 뒤 다시 기본모드로 돌아옵니다.</li>
+</ol>
+<p>복사되는 내용은 이미지가 아닌 HTML 서식이므로 티스토리에서 글을 수정할 수 있습니다. 프로필 사진은 티스토리의 이미지 보안 정책에 따라 표시되지 않을 수 있습니다.</p>
+</div>
+<button id="copyHelpClose" type="button">닫기</button>
+</section>
+</div>
+<script src="app.js?v=75"></script>
 </body>
 </html>
