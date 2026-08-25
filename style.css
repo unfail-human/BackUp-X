@@ -185,3 +185,6 @@ header .brand small{display:inline;font:400 7px/1 Arial,sans-serif;letter-spacin
 #imagePreviewContent .tweet:not(:last-child):before{top:55px;bottom:-1px}
 #imagePreviewContent .preview-text{height:auto;min-height:0;margin-top:8px;padding:0;border:0;line-height:1.72;overflow-wrap:anywhere;word-break:break-word}
 #imagePreviewContent .avatar{box-shadow:0 0 0 4px var(--image-card,#eee8df)}
+
+/* 2026-08-25 · 저장 타래 외곽선 */
+#imagePreviewContent{border:1px solid var(--line-strong)}
