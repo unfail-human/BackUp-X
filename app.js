@@ -130,8 +130,9 @@ async function applyTypography() {
   document.body.dataset.activeFont = font;
 }
 function resizeTweetArea(area) {
+  const minimumHeight = 120;
   area.style.height = "0px";
-  area.style.height = Math.max(44, area.scrollHeight + 2) + "px";
+  area.style.height = Math.max(minimumHeight, area.scrollHeight + 2) + "px";
 }
 function resizeAllTweetAreas() {
   view.querySelectorAll("textarea").forEach(resizeTweetArea);
@@ -199,6 +200,7 @@ function render() {
     };
   });
   applyTypography();
+  settleTweetLayout();
 }
 render();
 window.applyImportedThread = (items) => {
