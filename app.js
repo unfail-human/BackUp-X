@@ -6,6 +6,7 @@ const $ = (selector) => document.querySelector(selector);
 const view = $("#textView");
 const NOTICE_VERSION = "2.3";
 let avatarData = "";
+let avatarRemoteUrl = "";
 let avatarImage = null;
 let saveTimer = null;
 
@@ -19,7 +20,7 @@ function openWorkspaceDb() {
 }
 function workspaceState() {
   return {
-    tweets, avatarData, url: $("#url").value, mainColor: $("#mainColor").value,
+    tweets, avatarData, avatarRemoteUrl, url: $("#url").value, mainColor: $("#mainColor").value,
     bg: $("#bg").value, bg2: $("#bg2").value, bgMode: $("#bgMode").value, gradientAngle: $("#gradientAngle").value,
     card: $("#card").value, textSize: $("#textSize").value,
     font: $("#font").value,
@@ -59,6 +60,7 @@ async function loadWorkspace() {
     if (!saved) { $("#saveState").lastChild.textContent = " 자동 저장 준비"; return; }
     tweets.splice(0, tweets.length, ...(saved.tweets || tweets));
     avatarData = saved.avatarData || "";
+    avatarRemoteUrl = saved.avatarRemoteUrl || (!avatarData.startsWith("data:") && !avatarData.startsWith("blob:") ? avatarData : "");
     for (const id of ["url", "mainColor", "bg", "bg2", "bgMode", "gradientAngle", "card", "textSize", "font"]) if (saved[id] != null) $("#" + id).value = saved[id];
     if (saved.mainColor === "#9b8f7f" && saved.bg === "#d2c7b8" && saved.card === "#e8dfd3") {
       $("#bg").value = "#f6f2eb";
@@ -213,6 +215,7 @@ window.applyImportedThread = (items) => {
   })));
   const author = items[0]?.author || items[0] || {};
   const profileImage = author.profile_image_data || author.profile_image_url;
+  avatarRemoteUrl = author.profile_image_url || (!String(profileImage || "").startsWith("data:") ? profileImage || "" : "");
   if (profileImage) {
     avatarData = profileImage;
     avatarImage = new Image();
@@ -354,6 +357,7 @@ async function importLinkedTweet(url, insertAfter = null) {
   if (inserting) tweets.splice(insertAfter + 1, 0, imported[0]);
   else tweets.splice(0, tweets.length, ...imported);
   if (importedAuthor?.avatar_url) {
+    avatarRemoteUrl = importedAuthor.avatar_url;
     avatarData = await imageToLocalData(importedAuthor.avatar_url);
     avatarImage = new Image();
     if (!avatarData.startsWith("data:") && !avatarData.startsWith("blob:")) avatarImage.crossOrigin = "anonymous";
@@ -492,7 +496,8 @@ function exportHtml() {
   const fontStack = `'${safe(font)}','Pretendard Variable','Pretendard','Noto Sans KR',Arial,sans-serif`;
 
   const posts = tweets.map((tweet, index) => {
-    const avatar = avatarData ? `<img src="${safe(avatarData)}" width="44" height="44" alt="프로필 사진" style="display:inline-block;width:44px;height:44px;margin:0 12px 0 0;border:0;border-radius:50%;object-fit:cover;vertical-align:middle">` : "";
+    const exportAvatar = /^https?:\/\//i.test(avatarRemoteUrl) ? avatarRemoteUrl : (/^https?:\/\//i.test(avatarData) ? avatarData : "");
+    const avatar = exportAvatar ? `<img src="${safe(exportAvatar)}" width="44" height="44" alt="프로필 사진" referrerpolicy="no-referrer" style="display:inline-block;width:44px;height:44px;margin:0 12px 0 0;border:0;border-radius:50%;object-fit:cover;vertical-align:middle">` : "";
     const media = (tweet.media || []).map((src) => `<p style="margin:14px 0 0;text-align:center"><img src="${safe(src)}" alt="트윗 첨부 이미지" style="display:block;max-width:100%;height:auto;margin:0 auto;border:1px solid ${line};border-radius:10px"></p>`).join("");
     return `<tr><td style="padding:24px 26px;border:0;${index < tweets.length - 1 ? `border-bottom:1px solid ${line};` : ""}background-color:#ffffff;vertical-align:top">
       <p style="margin:0 0 16px;padding:0;font-family:${fontStack};line-height:1.4;text-align:left">${avatar}<span style="display:inline-block;vertical-align:middle"><strong style="display:block;color:#2e2c29;font-size:${textSize}px;line-height:1.3">${safe(tweet.name)}</strong><span style="display:block;margin-top:3px;color:#918d86;font-size:${hintSize}px;line-height:1.4">${safe(tweet.handle)}&nbsp;&nbsp;·&nbsp;&nbsp;${safe(tweet.date)}</span></span></p>
