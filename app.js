@@ -482,7 +482,7 @@ $("#gradientAngle").oninput = () => {
 };
 $("#bgMode").onchange = () => { updateBackgroundControls(); draw(); scheduleSave(); };
 
-function exportHtml() {
+function exportHtml(includeEmbeddedAvatar = false) {
   const font = $("#font").value;
   const textSize = Number($("#textSize").value);
   const hintSize = Math.max(11, textSize - 2);
@@ -496,7 +496,7 @@ function exportHtml() {
   const fontStack = `'${safe(font)}','Pretendard Variable','Pretendard','Noto Sans KR',Arial,sans-serif`;
 
   const posts = tweets.map((tweet, index) => {
-    const exportAvatar = /^https?:\/\//i.test(avatarRemoteUrl) ? avatarRemoteUrl : (/^https?:\/\//i.test(avatarData) ? avatarData : "");
+    const exportAvatar = /^https?:\/\//i.test(avatarRemoteUrl) ? avatarRemoteUrl : (/^https?:\/\//i.test(avatarData) || (includeEmbeddedAvatar && /^data:image\//i.test(avatarData)) ? avatarData : "");
     const avatar = exportAvatar ? `<img src="${safe(exportAvatar)}" width="44" height="44" alt="프로필 사진" referrerpolicy="no-referrer" style="display:inline-block;width:44px;height:44px;margin:0 12px 0 0;border:0;border-radius:50%;object-fit:cover;vertical-align:middle">` : "";
     const media = (tweet.media || []).map((src) => `<p style="margin:14px 0 0;text-align:center"><img src="${safe(src)}" alt="트윗 첨부 이미지" style="display:block;max-width:100%;height:auto;margin:0 auto;border:1px solid ${line};border-radius:10px"></p>`).join("");
     return `<tr><td style="padding:24px 26px;border:0;${index < tweets.length - 1 ? `border-bottom:1px solid ${line};` : ""}background-color:#ffffff;vertical-align:top">
@@ -508,6 +508,24 @@ function exportHtml() {
   const source = original ? `<tr><td style="padding:0 18px 18px;border:0;background-color:#ffffff"><p style="margin:0;padding:10px 14px;background-color:${soft};color:#746e66;font-family:${fontStack};font-size:${hintSize}px;line-height:1.5;text-align:left;word-break:break-all"><a href="${original}" style="color:#746e66;text-decoration:none"><strong>원문 트윗 보기</strong>&nbsp;&nbsp;›&nbsp;&nbsp;${original}</a></p></td></tr>` : "";
   return `<table data-ke-align="alignCenter" border="0" cellpadding="0" cellspacing="0" style="width:100%;max-width:760px;margin:24px auto;border:1px solid ${line};border-collapse:separate;border-spacing:0;background-color:#ffffff"><tbody>${posts}${source}</tbody></table>`;
 }
+
+$("#htmlCopy").onclick = async () => {
+  const button = $("#htmlCopy");
+  button.disabled = true;
+  button.textContent = "HTML 코드 복사 중…";
+  try {
+    await navigator.clipboard.writeText(exportHtml(true));
+    button.textContent = "✓ HTML 코드 복사 완료";
+  } catch (error) {
+    console.warn("HTML 코드 복사 실패", error);
+    button.textContent = "복사 실패 · 다시 시도";
+  } finally {
+    setTimeout(() => {
+      button.disabled = false;
+      button.textContent = "HTML 코드 복사";
+    }, 2200);
+  }
+};
 
 $("#rich").onclick = async () => {
   const button = $("#rich");
